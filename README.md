@@ -10,6 +10,7 @@
 - 修改前自动备份 + 校验
 - 状态查看 + 重启 Gateway
 - 日志查看（最近 200 行）
+- 系统概况（uname/uptime/disk/mem）
 - 简单聊天测试（调用 `openclaw agent`）
 - 一键安装 OpenClaw（页面按钮）
 - Cron 任务创建（简单运维）

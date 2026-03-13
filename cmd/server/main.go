@@ -62,6 +62,13 @@ type logsResp struct {
 	Output string `json:"output"`
 }
 
+type systemResp struct {
+	Uname  string `json:"uname"`
+	Uptime string `json:"uptime"`
+	Disk   string `json:"disk"`
+	Mem    string `json:"mem"`
+}
+
 type cronPayload struct {
 	Text     string `json:"text"`
 	Minutes  int    `json:"minutes"`
@@ -269,6 +276,16 @@ func main() {
 		openclaw := runCmd(bin, withProfile(profile, "status")...)
 		gateway := runCmd(bin, withProfile(profile, "gateway", "status")...)
 		writeJSON(w, statusResp{OpenClaw: openclaw, Gateway: gateway})
+	}))
+
+	mux.HandleFunc("/api/system", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		sys := systemResp{
+			Uname:  runCmd("bash", "-lc", "uname -a"),
+			Uptime: runCmd("bash", "-lc", "uptime"),
+			Disk:   runCmd("bash", "-lc", "df -h /"),
+			Mem:    runCmd("bash", "-lc", "free -h"),
+		}
+		writeJSON(w, sys)
 	}))
 
 	mux.HandleFunc("/api/logs", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {

@@ -20,7 +20,7 @@
 
   <div class="container">
     <div class="grid">
-      <section class="card">
+      <section class="card glow">
         <h2>配置</h2>
         <p class="muted">修改模型与 API 后可自动生效</p>
         <div class="row">
@@ -44,6 +44,15 @@
           <button onclick="saveConfig()">保存</button>
         </div>
         <pre id="configStatus" class="status"></pre>
+      </section>
+
+      <section class="card">
+        <h2>系统概况</h2>
+        <p class="muted">系统状态 / 资源概览</p>
+        <div class="actions">
+          <button class="secondary" onclick="loadSystem()">刷新系统</button>
+        </div>
+        <pre id="systemOutput" class="status"></pre>
       </section>
 
       <section class="card">
@@ -276,6 +285,13 @@
       });
       const out = await r.text();
       document.getElementById('configStatus').textContent = out;
+    }
+
+    async function loadSystem() {
+      const r = await fetch('/api/system');
+      const data = await r.json();
+      document.getElementById('systemOutput').textContent =
+        (data.uname || '') + '\n' + (data.uptime || '') + '\n' + (data.disk || '') + '\n' + (data.mem || '');
     }
 
     async function loadChannels() {
