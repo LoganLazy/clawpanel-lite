@@ -53,6 +53,23 @@ type statusResp struct {
 	Gateway  string `json:"gateway"`
 }
 
+type logsResp struct {
+	Output string `json:"output"`
+}
+
+type cronPayload struct {
+	Text     string `json:"text"`
+	Minutes  int    `json:"minutes"`
+	JobName  string `json:"jobName"`
+	Mode     string `json:"mode"`     // once|every
+}
+
+type apiTemplate struct {
+	Name    string `json:"name"`
+	BaseURL string `json:"baseUrl"`
+	Model   string `json:"model"`
+}
+
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
 
@@ -152,10 +169,26 @@ func main() {
 		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
+	mux.HandleFunc("/api/templates", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		templates := []apiTemplate{
+			{Name: "通义千问", BaseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", Model: "qwen-turbo"},
+			{Name: "智谱 GLM", BaseURL: "https://open.bigmodel.cn/api/paas/v4", Model: "glm-4"},
+			{Name: "百川", BaseURL: "https://api.baichuan-ai.com/v1", Model: "baichuan2-53b"},
+			{Name: "讯飞星火", BaseURL: "https://spark-api-open.xf-yun.com/v1", Model: "spark-lite"},
+			{Name: "DeepSeek", BaseURL: "https://api.deepseek.com/v1", Model: "deepseek-chat"},
+		}
+		writeJSON(w, templates)
+	}))
+
 	mux.HandleFunc("/api/status", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		openclaw := runCmd(bin, withProfile(profile, "status")...)
 		gateway := runCmd(bin, withProfile(profile, "gateway", "status")...)
 		writeJSON(w, statusResp{OpenClaw: openclaw, Gateway: gateway})
+	}))
+
+	mux.HandleFunc("/api/logs", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "logs", "--limit", "200", "--plain")...)
+		writeJSON(w, logsResp{Output: out})
 	}))
 
 	mux.HandleFunc("/api/gateway/restart", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
@@ -193,6 +226,40 @@ func main() {
 			args = append(args, "--model", payload.Model)
 		}
 		out := runCmd(bin, args...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/cron/add", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload cronPayload
+		if err := json.Unmarshal(body, &payload); err != nil || strings.TrimSpace(payload.Text) == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		if payload.Minutes <= 0 {
+			payload.Minutes = 30
+		}
+		if payload.JobName == "" {
+			payload.JobName = "panel-job"
+		}
+		mode := strings.ToLower(strings.TrimSpace(payload.Mode))
+		if mode == "" {
+			mode = "every"
+		}
+
+		sched := "{\"kind\":\"every\",\"everyMs\":" + fmt.Sprintf("%d", payload.Minutes*60*1000) + "}"
+		if mode == "once" {
+			// one-shot in minutes
+			at := time.Now().Add(time.Duration(payload.Minutes) * time.Minute).Format(time.RFC3339)
+			sched = "{\"kind\":\"at\",\"at\":\"" + at + "\"}"
+		}
+		job := "{\"name\":\"" + payload.JobName + "\",\"schedule\":" + sched + ",\"payload\":{\"kind\":\"systemEvent\",\"text\":\"" + escapeJSON(payload.Text) + "\"},\"sessionTarget\":\"main\"}"
+
+		out := runCmd(bin, withProfile(profile, "cron", "add", "--job", job)...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
@@ -355,4 +422,9 @@ func withProfile(profile string, args ...string) []string {
 		return args
 	}
 	return append([]string{"--profile", profile}, args...)
+}
+
+func escapeJSON(s string) string {
+	replacer := strings.NewReplacer("\\", "\\\\", "\"", "\\\"", "\n", "\\n", "\r", "\\r")
+	return replacer.Replace(s)
 }

@@ -5,11 +5,14 @@
 ## 功能
 - 单用户登录
 - 配置：model / apiKey / baseUrl（自定义国产 API）
+- 国产 API 模板（通义/智谱/百川/讯飞/DeepSeek）
 - 自动探测 OpenClaw 配置文件路径
-- 修改前自动备份
+- 修改前自动备份 + 校验
 - 状态查看 + 重启 Gateway
+- 日志查看（最近 200 行）
 - 简单聊天测试（调用 `openclaw agent`）
 - 一键安装 OpenClaw（页面按钮）
+- Cron 任务创建（简单运维）
 - 支持 OpenClaw profile（隔离测试环境）
 
 ## 运行
@@ -33,6 +36,16 @@
 ## 构建
 ```bash
 go build -o clawpanel-lite ./cmd/server
+```
+
+## 一键安装（服务器）
+```bash
+curl -fsSL https://raw.githubusercontent.com/LoganLazy/clawpanel-lite/main/scripts/install.sh | bash
+```
+
+如需连带安装 OpenClaw：
+```bash
+curl -fsSL https://raw.githubusercontent.com/LoganLazy/clawpanel-lite/main/scripts/install.sh | bash -s -- --install-openclaw
 ```
 
 ## 备注

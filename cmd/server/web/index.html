@@ -35,6 +35,10 @@
           <label>API Key</label>
           <input id="apiKey" placeholder="sk-..." />
         </div>
+        <div class="row">
+          <label>国产模板</label>
+          <select id="templateSelect"></select>
+        </div>
         <div class="actions">
           <button class="secondary" onclick="loadConfig()">刷新</button>
           <button onclick="saveConfig()">保存</button>
@@ -53,6 +57,15 @@
       </section>
 
       <section class="card">
+        <h2>日志</h2>
+        <p class="muted">最近 200 行日志</p>
+        <div class="actions">
+          <button class="secondary" onclick="loadLogs()">刷新日志</button>
+        </div>
+        <pre id="logsOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
         <h2>聊天测试</h2>
         <p class="muted">发送一条测试消息（默认模型）</p>
         <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
@@ -64,6 +77,34 @@
           <button class="success" onclick="sendChat()">发送</button>
         </div>
         <pre id="chatOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
+        <h2>定时任务 (Cron)</h2>
+        <p class="muted">快速创建运维任务</p>
+        <div class="row">
+          <label>任务名称</label>
+          <input id="cronName" placeholder="panel-job" />
+        </div>
+        <div class="row">
+          <label>内容</label>
+          <textarea id="cronText" rows="3" placeholder="例如：每30分钟检查网关状态"></textarea>
+        </div>
+        <div class="row">
+          <label>间隔分钟</label>
+          <input id="cronMinutes" placeholder="30" />
+        </div>
+        <div class="row">
+          <label>模式</label>
+          <select id="cronMode">
+            <option value="every">循环执行</option>
+            <option value="once">一次性</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button onclick="addCron()">创建任务</button>
+        </div>
+        <pre id="cronOutput" class="status"></pre>
       </section>
 
       <section class="card">
@@ -129,6 +170,12 @@
       document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
     }
 
+    async function loadLogs() {
+      const r = await fetch('/api/logs');
+      const data = await r.json();
+      document.getElementById('logsOutput').textContent = data.output || '';
+    }
+
     async function restartGateway() {
       const r = await fetch('/api/gateway/restart', { method: 'POST' });
       const data = await r.json();
@@ -155,8 +202,44 @@
       document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
     }
 
+    async function addCron() {
+      const payload = {
+        jobName: document.getElementById('cronName').value,
+        text: document.getElementById('cronText').value,
+        minutes: parseInt(document.getElementById('cronMinutes').value || '30', 10),
+        mode: document.getElementById('cronMode').value,
+      };
+      const r = await fetch('/api/cron/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      document.getElementById('cronOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loadTemplates() {
+      const r = await fetch('/api/templates');
+      const data = await r.json();
+      const sel = document.getElementById('templateSelect');
+      sel.innerHTML = '<option value="">选择模板</option>';
+      data.forEach((t) => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify(t);
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => {
+        if (!sel.value) return;
+        const t = JSON.parse(sel.value);
+        document.getElementById('baseUrl').value = t.baseUrl || '';
+        document.getElementById('model').value = t.model || '';
+      });
+    }
+
     detectConfig();
     loadConfig();
+    loadTemplates();
   </script>
 </body>
 </html>

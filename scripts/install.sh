@@ -10,9 +10,10 @@ PORT="1450"
 USER="admin"
 PASS="claw520"
 PROFILE=""
+OPENCLAW_INSTALL=0
 
 if [ "${1:-}" = "--help" ]; then
-  echo "Usage: install.sh [--dir /path] [--port 1450] [--user admin] [--pass claw520] [--profile dev]"
+  echo "Usage: install.sh [--dir /path] [--port 1450] [--user admin] [--pass claw520] [--profile dev] [--install-openclaw]"
   exit 0
 fi
 
@@ -23,6 +24,7 @@ while [ $# -gt 0 ]; do
     --user) USER="$2"; shift 2;;
     --pass) PASS="$2"; shift 2;;
     --profile) PROFILE="$2"; shift 2;;
+    --install-openclaw) OPENCLAW_INSTALL=1; shift 1;;
     *) shift;;
   esac
 done
@@ -45,6 +47,10 @@ if ! command -v go >/dev/null 2>&1; then
   else
     echo "Please install golang first."; exit 1
   fi
+fi
+
+if [ "$OPENCLAW_INSTALL" = "1" ] && ! command -v openclaw >/dev/null 2>&1; then
+  curl -fsSL https://openclaw.ai/install.sh | bash
 fi
 
 mkdir -p "$INSTALL_DIR"
