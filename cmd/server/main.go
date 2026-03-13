@@ -471,7 +471,7 @@ func main() {
 		if strings.TrimSpace(path) == "" {
 			path = "/tmp/openclaw_screenshot.png"
 		}
-		out := runCmd(bin, withProfile(profile, "browser", "screenshot", "--path", path)...)
+		out := runCmd(bin, withProfile(profile, "browser", "screenshot", path)...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
