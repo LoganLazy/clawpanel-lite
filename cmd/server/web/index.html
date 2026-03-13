@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClawPanel Lite</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="bg">
+  <header class="topbar">
+    <div>
+      <strong>ClawPanel Lite</strong>
+      <span class="muted">OpenClaw 轻量控制面板</span>
+    </div>
+    <a href="/logout" class="btn ghost">退出</a>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>配置</h2>
+      <div class="row">
+        <label>Model</label>
+        <input id="model" placeholder="anthropic/claude-sonnet-4-5" />
+      </div>
+      <div class="row">
+        <label>Base URL</label>
+        <input id="baseUrl" placeholder="https://api.xxx.com/v1" />
+      </div>
+      <div class="row">
+        <label>API Key</label>
+        <input id="apiKey" placeholder="sk-..." />
+      </div>
+      <div class="actions">
+        <button onclick="loadConfig()">刷新</button>
+        <button onclick="saveConfig()">保存</button>
+      </div>
+      <pre id="configStatus" class="status"></pre>
+    </section>
+
+    <section class="card">
+      <h2>状态</h2>
+      <div class="actions">
+        <button onclick="loadStatus()">刷新状态</button>
+        <button onclick="restartGateway()">重启 Gateway</button>
+      </div>
+      <pre id="statusOutput" class="status"></pre>
+    </section>
+
+    <section class="card">
+      <h2>聊天测试</h2>
+      <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
+      <div class="row">
+        <label>Model (可选)</label>
+        <input id="chatModel" placeholder="留空则默认" />
+      </div>
+      <div class="actions">
+        <button onclick="sendChat()">发送</button>
+      </div>
+      <pre id="chatOutput" class="status"></pre>
+    </section>
+
+    <section class="card">
+      <h2>安装 OpenClaw</h2>
+      <p class="muted">如未安装，可一键安装</p>
+      <div class="actions">
+        <button onclick="installOpenClaw()">一键安装</button>
+      </div>
+      <pre id="installOutput" class="status"></pre>
+    </section>
+
+    <section class="card">
+      <h2>配置文件</h2>
+      <div class="actions">
+        <button onclick="detectConfig()">探测配置路径</button>
+      </div>
+      <pre id="configPath" class="status"></pre>
+    </section>
+  </main>
+
+  <script>
+    async function detectConfig() {
+      const r = await fetch('/api/config/status');
+      const data = await r.json();
+      document.getElementById('configPath').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loadConfig() {
+      const r = await fetch('/api/config/get');
+      if (!r.ok) {
+        document.getElementById('configStatus').textContent = '读取失败';
+        return;
+      }
+      const data = await r.json();
+      document.getElementById('model').value = data.model || '';
+      document.getElementById('baseUrl').value = data.baseUrl || '';
+      document.getElementById('apiKey').value = data.apiKey || '';
+      document.getElementById('configStatus').textContent = '已加载';
+    }
+
+    async function saveConfig() {
+      const payload = {
+        model: document.getElementById('model').value,
+        baseUrl: document.getElementById('baseUrl').value,
+        apiKey: document.getElementById('apiKey').value,
+      };
+      const r = await fetch('/api/config/set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('configStatus').textContent = out;
+    }
+
+    async function loadStatus() {
+      const r = await fetch('/api/status');
+      const data = await r.json();
+      document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function restartGateway() {
+      const r = await fetch('/api/gateway/restart', { method: 'POST' });
+      const data = await r.json();
+      document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function sendChat() {
+      const payload = {
+        message: document.getElementById('chatMsg').value,
+        model: document.getElementById('chatModel').value,
+      };
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      document.getElementById('chatOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function installOpenClaw() {
+      const r = await fetch('/api/install', { method: 'POST' });
+      const data = await r.json();
+      document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    detectConfig();
+    loadConfig();
+  </script>
+</body>
+</html>
