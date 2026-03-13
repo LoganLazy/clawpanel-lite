@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${HOME:=/root}"
+export HOME
+
 REPO="https://github.com/LoganLazy/clawpanel-lite.git"
 INSTALL_DIR="/opt/clawpanel-lite"
 PORT="1450"
