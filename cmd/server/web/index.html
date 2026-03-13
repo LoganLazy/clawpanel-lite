@@ -48,7 +48,7 @@
 
       <section class="card">
         <h2>渠道配置</h2>
-        <p class="muted">Telegram / QQ 简易配置</p>
+        <p class="muted">Telegram / QQ / Discord 简易配置</p>
         <div class="row">
           <label>Telegram Bot Token</label>
           <input id="tgToken" placeholder="123:abc" />
@@ -57,6 +57,7 @@
           <label>Telegram AllowFrom (逗号分隔)</label>
           <input id="tgAllow" placeholder="tg:123,tg:456" />
         </div>
+        <hr class="sep" />
         <div class="row">
           <label>QQ App ID</label>
           <input id="qqAppId" placeholder="" />
@@ -72,6 +73,19 @@
         <div class="row">
           <label>QQ AllowFrom (逗号分隔)</label>
           <input id="qqAllow" placeholder="qq:123,qq:456" />
+        </div>
+        <hr class="sep" />
+        <div class="row">
+          <label>Discord Bot Token</label>
+          <input id="dcToken" placeholder="" />
+        </div>
+        <div class="row">
+          <label>Discord Guild ID</label>
+          <input id="dcGuild" placeholder="" />
+        </div>
+        <div class="row">
+          <label>Discord User ID</label>
+          <input id="dcUser" placeholder="" />
         </div>
         <div class="actions">
           <button class="secondary" onclick="loadChannels()">刷新</button>
@@ -102,19 +116,29 @@
       <section class="card">
         <h2>技能</h2>
         <p class="muted">列出/检测技能</p>
+        <div class="row">
+          <label>技能名（info 可选）</label>
+          <input id="skillName" placeholder="skill-id" />
+        </div>
         <div class="actions">
           <button class="secondary" onclick="listSkills()">列出技能</button>
           <button onclick="checkSkills()">检测依赖</button>
+          <button class="secondary" onclick="infoSkill()">详情 info</button>
         </div>
         <pre id="skillsOutput" class="status"></pre>
       </section>
 
       <section class="card">
-        <h2>浏览器插件</h2>
-        <p class="muted">安装 OpenClaw Chrome 插件</p>
+        <h2>浏览器</h2>
+        <p class="muted">浏览器状态与插件</p>
         <div class="actions">
-          <button onclick="installExtension()">安装插件</button>
-          <button class="secondary" onclick="extensionPath()">查看插件路径</button>
+          <button class="secondary" onclick="browserStatus()">状态</button>
+          <button onclick="browserStart()">启动</button>
+          <button class="danger" onclick="browserStop()">停止</button>
+        </div>
+        <div class="actions">
+          <button onclick="installExtension()">安装 Chrome 插件</button>
+          <button class="secondary" onclick="extensionPath()">插件路径</button>
         </div>
         <pre id="extOutput" class="status"></pre>
       </section>
@@ -231,6 +255,9 @@
       document.getElementById('qqAppKey').value = data.qqAppKey || '';
       document.getElementById('qqBotToken').value = data.qqBotToken || '';
       document.getElementById('qqAllow').value = data.qqAllow || '';
+      document.getElementById('dcToken').value = data.discordToken || '';
+      document.getElementById('dcGuild').value = data.discordGuild || '';
+      document.getElementById('dcUser').value = data.discordUser || '';
       document.getElementById('channelStatus').textContent = '已加载';
     }
 
@@ -242,6 +269,9 @@
         qqAppKey: document.getElementById('qqAppKey').value,
         qqBotToken: document.getElementById('qqBotToken').value,
         qqAllow: document.getElementById('qqAllow').value,
+        discordToken: document.getElementById('dcToken').value,
+        discordGuild: document.getElementById('dcGuild').value,
+        discordUser: document.getElementById('dcUser').value,
       };
       const r = await fetch('/api/channels/set', {
         method: 'POST',
@@ -326,6 +356,17 @@
       document.getElementById('skillsOutput').textContent = data.output || '';
     }
 
+    async function infoSkill() {
+      const skill = document.getElementById('skillName').value;
+      const r = await fetch('/api/skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'info', skill })
+      });
+      const data = await r.json();
+      document.getElementById('skillsOutput').textContent = data.output || '';
+    }
+
     async function installExtension() {
       const r = await fetch('/api/browser/extension', { method: 'POST' });
       const data = await r.json();
@@ -334,6 +375,24 @@
 
     async function extensionPath() {
       const r = await fetch('/api/browser/extension/path');
+      const data = await r.json();
+      document.getElementById('extOutput').textContent = data.output || '';
+    }
+
+    async function browserStatus() {
+      const r = await fetch('/api/browser/status');
+      const data = await r.json();
+      document.getElementById('extOutput').textContent = data.output || '';
+    }
+
+    async function browserStart() {
+      const r = await fetch('/api/browser/start');
+      const data = await r.json();
+      document.getElementById('extOutput').textContent = data.output || '';
+    }
+
+    async function browserStop() {
+      const r = await fetch('/api/browser/stop');
       const data = await r.json();
       document.getElementById('extOutput').textContent = data.output || '';
     }

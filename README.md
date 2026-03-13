@@ -13,9 +13,10 @@
 - 简单聊天测试（调用 `openclaw agent`）
 - 一键安装 OpenClaw（页面按钮）
 - Cron 任务创建（简单运维）
-- 渠道配置（Telegram / QQ）
-- 技能列表/检测
-- 浏览器插件安装与路径查看
+- 渠道配置（Telegram / QQ / Discord）
+- 技能列表/检测/info
+- 浏览器管理（状态/启动/停止）
+- Chrome 插件安装/路径查看
 
 ## 运行
 ```bash

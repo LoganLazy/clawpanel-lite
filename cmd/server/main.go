@@ -32,6 +32,11 @@ const (
 	cookieName  = "clawpanel_session"
 )
 
+var (
+	gOpenclawBin string
+	gProfile     string
+)
+
 type configStatus struct {
 	ConfigPath string `json:"configPath"`
 	Found      bool   `json:"found"`
@@ -77,10 +82,13 @@ type channelPayload struct {
 	QQAppKey      string `json:"qqAppKey"`
 	QQBotToken    string `json:"qqBotToken"`
 	QQAllow       string `json:"qqAllow"`
+	DiscordToken  string `json:"discordToken"`
+	DiscordGuild  string `json:"discordGuild"`
+	DiscordUser   string `json:"discordUser"`
 }
 
 type skillsPayload struct {
-	Action string `json:"action"` // list|check
+	Action string `json:"action"` // list|check|info
 	Skill  string `json:"skill"`
 }
 
@@ -93,6 +101,9 @@ func main() {
 	bin := envOr("CLAWPANEL_OPENCLAW_BIN", "openclaw")
 	installScript := envOr("CLAWPANEL_INSTALL_SCRIPT", "https://openclaw.ai/install.sh")
 	profile := envOr("CLAWPANEL_PROFILE", "")
+
+	gOpenclawBin = bin
+	gProfile = profile
 
 	key1 := securecookie.GenerateRandomKey(32)
 	key2 := securecookie.GenerateRandomKey(32)
@@ -195,13 +206,17 @@ func main() {
 			return
 		}
 		clean := jsonc.ToJSON(cfg)
+		discordGuild, discordUsers := firstGuild(clean)
 		payload := channelPayload{
 			TelegramToken: gjson.GetBytes(clean, "channels.telegram.botToken").String(),
-			TelegramAllow: strings.Join(gjson.GetBytes(clean, "channels.telegram.allowFrom").Array(), ","),
+			TelegramAllow: joinArray(gjson.GetBytes(clean, "channels.telegram.allowFrom")),
 			QQAppID:       gjson.GetBytes(clean, "channels.qq.appId").String(),
 			QQAppKey:      gjson.GetBytes(clean, "channels.qq.appKey").String(),
 			QQBotToken:    gjson.GetBytes(clean, "channels.qq.botToken").String(),
-			QQAllow:       strings.Join(gjson.GetBytes(clean, "channels.qq.allowFrom").Array(), ","),
+			QQAllow:       joinArray(gjson.GetBytes(clean, "channels.qq.allowFrom")),
+			DiscordToken:  gjson.GetBytes(clean, "channels.discord.token").String(),
+			DiscordGuild:  discordGuild,
+			DiscordUser:   discordUsers,
 		}
 		writeJSON(w, payload)
 	}))
@@ -338,7 +353,11 @@ func main() {
 		if action == "" {
 			action = "list"
 		}
-		out := runCmd(bin, withProfile(profile, "skills", action)...)
+		args := withProfile(profile, "skills", action)
+		if action == "info" && strings.TrimSpace(payload.Skill) != "" {
+			args = append(args, payload.Skill)
+		}
+		out := runCmd(bin, args...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
@@ -353,6 +372,21 @@ func main() {
 
 	mux.HandleFunc("/api/browser/extension/path", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		out := runCmd(bin, withProfile(profile, "browser", "extension", "path")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/browser/status", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "browser", "status")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/browser/start", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "browser", "start")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/browser/stop", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "browser", "stop")...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
@@ -487,7 +521,7 @@ func updateConfigFile(path string, payload configPayload) error {
 		return fmt.Errorf("write config failed: %w", err)
 	}
 
-	if out := runCmd("openclaw", "config", "validate"); strings.Contains(strings.ToLower(out), "error") {
+	if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
 		return fmt.Errorf("config validate failed: %s", out)
 	}
 
@@ -531,11 +565,23 @@ func updateChannels(path string, payload channelPayload) error {
 		}
 	}
 
+	if payload.DiscordToken != "" {
+		updated, _ = sjson.SetBytes(updated, "channels.discord.enabled", true)
+		updated, _ = sjson.SetBytes(updated, "channels.discord.token", payload.DiscordToken)
+		if payload.DiscordGuild != "" {
+			updated, _ = sjson.SetBytes(updated, "channels.discord.groupPolicy", "allowlist")
+			updated, _ = sjson.SetBytes(updated, "channels.discord.guilds."+payload.DiscordGuild+".requireMention", true)
+			if payload.DiscordUser != "" {
+				updated, _ = sjson.SetBytes(updated, "channels.discord.guilds."+payload.DiscordGuild+".users", []string{payload.DiscordUser})
+			}
+		}
+	}
+
 	if err := os.WriteFile(path, updated, 0644); err != nil {
 		return fmt.Errorf("write config failed: %w", err)
 	}
 
-	if out := runCmd("openclaw", "config", "validate"); strings.Contains(strings.ToLower(out), "error") {
+	if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
 		return fmt.Errorf("config validate failed: %s", out)
 	}
 
@@ -552,6 +598,29 @@ func splitCSV(v string) []string {
 		}
 	}
 	return out
+}
+
+func joinArray(res gjson.Result) string {
+	if !res.Exists() {
+		return ""
+	}
+	if res.IsArray() {
+		vals := []string{}
+		for _, r := range res.Array() {
+			vals = append(vals, r.String())
+		}
+		return strings.Join(vals, ",")
+	}
+	return res.String()
+}
+
+func firstGuild(clean []byte) (string, string) {
+	guilds := gjson.GetBytes(clean, "channels.discord.guilds").Map()
+	for k, v := range guilds {
+		users := joinArray(v.Get("users"))
+		return k, users
+	}
+	return "", ""
 }
 
 func runCmd(name string, args ...string) string {

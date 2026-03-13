@@ -70,7 +70,7 @@ body {
 
 label { color: var(--muted); font-size: 12px; letter-spacing: .2px; }
 
-input, textarea {
+input, textarea, select {
   padding: 10px 12px; border-radius: 10px; border:1px solid var(--border);
   background: #0b1020; color: var(--text);
 }
@@ -95,6 +95,8 @@ button.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
   background:#0b1020; border:1px dashed var(--border);
   padding:10px; border-radius:10px; min-height:80px; white-space: pre-wrap;
 }
+
+.sep { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 
 footer { text-align:center; color: var(--muted); padding: 20px 0 40px; }
 
