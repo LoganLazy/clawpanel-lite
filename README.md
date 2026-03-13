@@ -10,6 +10,7 @@
 - 状态查看 + 重启 Gateway
 - 简单聊天测试（调用 `openclaw agent`）
 - 一键安装 OpenClaw（页面按钮）
+- 支持 OpenClaw profile（隔离测试环境）
 
 ## 运行
 ```bash
@@ -27,6 +28,7 @@
 - `CLAWPANEL_CONFIG_PATH=/path/to/openclaw.json`
 - `CLAWPANEL_OPENCLAW_BIN=/path/to/openclaw`
 - `CLAWPANEL_INSTALL_SCRIPT=https://openclaw.ai/install.sh`
+- `CLAWPANEL_PROFILE=dev` （使用 `openclaw --profile dev`）
 
 ## 构建
 ```bash

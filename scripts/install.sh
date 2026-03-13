@@ -9,9 +9,10 @@ INSTALL_DIR="/opt/clawpanel-lite"
 PORT="1450"
 USER="admin"
 PASS="claw520"
+PROFILE=""
 
 if [ "${1:-}" = "--help" ]; then
-  echo "Usage: install.sh [--dir /path] [--port 1450] [--user admin] [--pass claw520]"
+  echo "Usage: install.sh [--dir /path] [--port 1450] [--user admin] [--pass claw520] [--profile dev]"
   exit 0
 fi
 
@@ -21,6 +22,7 @@ while [ $# -gt 0 ]; do
     --port) PORT="$2"; shift 2;;
     --user) USER="$2"; shift 2;;
     --pass) PASS="$2"; shift 2;;
+    --profile) PROFILE="$2"; shift 2;;
     *) shift;;
   esac
 done
@@ -69,6 +71,7 @@ ExecStart=$INSTALL_DIR/clawpanel-lite
 Environment=CLAWPANEL_PORT=$PORT
 Environment=CLAWPANEL_USER=$USER
 Environment=CLAWPANEL_PASS=$PASS
+Environment=CLAWPANEL_PROFILE=$PROFILE
 Restart=always
 
 [Install]

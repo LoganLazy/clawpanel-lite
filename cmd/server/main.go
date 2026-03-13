@@ -61,6 +61,7 @@ func main() {
 	pass := envOr("CLAWPANEL_PASS", defaultPass)
 	bin := envOr("CLAWPANEL_OPENCLAW_BIN", "openclaw")
 	installScript := envOr("CLAWPANEL_INSTALL_SCRIPT", "https://openclaw.ai/install.sh")
+	profile := envOr("CLAWPANEL_PROFILE", "")
 
 	key1 := securecookie.GenerateRandomKey(32)
 	key2 := securecookie.GenerateRandomKey(32)
@@ -152,8 +153,8 @@ func main() {
 	}))
 
 	mux.HandleFunc("/api/status", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
-		openclaw := runCmd(bin, "status")
-		gateway := runCmd(bin, "gateway", "status")
+		openclaw := runCmd(bin, withProfile(profile, "status")...)
+		gateway := runCmd(bin, withProfile(profile, "gateway", "status")...)
 		writeJSON(w, statusResp{OpenClaw: openclaw, Gateway: gateway})
 	}))
 
@@ -162,7 +163,7 @@ func main() {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		out := runCmd(bin, "gateway", "restart")
+		out := runCmd(bin, withProfile(profile, "gateway", "restart")...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
@@ -187,7 +188,7 @@ func main() {
 			return
 		}
 
-		args := []string{"agent", "--message", payload.Message, "--json"}
+		args := withProfile(profile, "agent", "--message", payload.Message, "--json")
 		if strings.TrimSpace(payload.Model) != "" {
 			args = append(args, "--model", payload.Model)
 		}
@@ -347,4 +348,11 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(v)
+}
+
+func withProfile(profile string, args ...string) []string {
+	if strings.TrimSpace(profile) == "" {
+		return args
+	}
+	return append([]string{"--profile", profile}, args...)
 }

@@ -6,76 +6,87 @@
   <title>ClawPanel Lite</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body class="bg">
+<body>
   <header class="topbar">
-    <div>
-      <strong>ClawPanel Lite</strong>
-      <span class="muted">OpenClaw 轻量控制面板</span>
+    <div class="brand">
+      <div class="logo">🦀</div>
+      <div>
+        <div><strong>ClawPanel Lite</strong> <span class="badge">Lite</span></div>
+        <div class="muted">OpenClaw 轻量控制面板</div>
+      </div>
     </div>
-    <a href="/logout" class="btn ghost">退出</a>
+    <a href="/logout" class="link-btn">退出</a>
   </header>
 
-  <main class="grid">
-    <section class="card">
-      <h2>配置</h2>
-      <div class="row">
-        <label>Model</label>
-        <input id="model" placeholder="anthropic/claude-sonnet-4-5" />
-      </div>
-      <div class="row">
-        <label>Base URL</label>
-        <input id="baseUrl" placeholder="https://api.xxx.com/v1" />
-      </div>
-      <div class="row">
-        <label>API Key</label>
-        <input id="apiKey" placeholder="sk-..." />
-      </div>
-      <div class="actions">
-        <button onclick="loadConfig()">刷新</button>
-        <button onclick="saveConfig()">保存</button>
-      </div>
-      <pre id="configStatus" class="status"></pre>
-    </section>
+  <div class="container">
+    <div class="grid">
+      <section class="card">
+        <h2>配置</h2>
+        <p class="muted">修改模型与 API 后可自动生效</p>
+        <div class="row">
+          <label>Model</label>
+          <input id="model" placeholder="anthropic/claude-sonnet-4-5" />
+        </div>
+        <div class="row">
+          <label>Base URL</label>
+          <input id="baseUrl" placeholder="https://api.xxx.com/v1" />
+        </div>
+        <div class="row">
+          <label>API Key</label>
+          <input id="apiKey" placeholder="sk-..." />
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="loadConfig()">刷新</button>
+          <button onclick="saveConfig()">保存</button>
+        </div>
+        <pre id="configStatus" class="status"></pre>
+      </section>
 
-    <section class="card">
-      <h2>状态</h2>
-      <div class="actions">
-        <button onclick="loadStatus()">刷新状态</button>
-        <button onclick="restartGateway()">重启 Gateway</button>
-      </div>
-      <pre id="statusOutput" class="status"></pre>
-    </section>
+      <section class="card">
+        <h2>状态</h2>
+        <p class="muted">查看 OpenClaw / Gateway 状态</p>
+        <div class="actions">
+          <button class="secondary" onclick="loadStatus()">刷新状态</button>
+          <button class="danger" onclick="restartGateway()">重启 Gateway</button>
+        </div>
+        <pre id="statusOutput" class="status"></pre>
+      </section>
 
-    <section class="card">
-      <h2>聊天测试</h2>
-      <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
-      <div class="row">
-        <label>Model (可选)</label>
-        <input id="chatModel" placeholder="留空则默认" />
-      </div>
-      <div class="actions">
-        <button onclick="sendChat()">发送</button>
-      </div>
-      <pre id="chatOutput" class="status"></pre>
-    </section>
+      <section class="card">
+        <h2>聊天测试</h2>
+        <p class="muted">发送一条测试消息（默认模型）</p>
+        <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
+        <div class="row">
+          <label>Model (可选)</label>
+          <input id="chatModel" placeholder="留空则默认" />
+        </div>
+        <div class="actions">
+          <button class="success" onclick="sendChat()">发送</button>
+        </div>
+        <pre id="chatOutput" class="status"></pre>
+      </section>
 
-    <section class="card">
-      <h2>安装 OpenClaw</h2>
-      <p class="muted">如未安装，可一键安装</p>
-      <div class="actions">
-        <button onclick="installOpenClaw()">一键安装</button>
-      </div>
-      <pre id="installOutput" class="status"></pre>
-    </section>
+      <section class="card">
+        <h2>安装 OpenClaw</h2>
+        <p class="muted">如未安装，可一键安装</p>
+        <div class="actions">
+          <button onclick="installOpenClaw()">一键安装</button>
+        </div>
+        <pre id="installOutput" class="status"></pre>
+      </section>
 
-    <section class="card">
-      <h2>配置文件</h2>
-      <div class="actions">
-        <button onclick="detectConfig()">探测配置路径</button>
-      </div>
-      <pre id="configPath" class="status"></pre>
-    </section>
-  </main>
+      <section class="card">
+        <h2>配置文件</h2>
+        <p class="muted">自动探测配置路径</p>
+        <div class="actions">
+          <button class="secondary" onclick="detectConfig()">探测配置路径</button>
+        </div>
+        <pre id="configPath" class="status"></pre>
+      </section>
+    </div>
+  </div>
+
+  <footer class="muted">ClawPanel Lite · Minimal Web UI</footer>
 
   <script>
     async function detectConfig() {

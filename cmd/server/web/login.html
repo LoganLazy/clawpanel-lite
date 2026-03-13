@@ -6,18 +6,31 @@
   <title>ClawPanel Lite - 登录</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body class="bg">
-  <div class="card">
-    <h1>ClawPanel Lite</h1>
-    <p class="muted">轻量 OpenClaw 管理面板</p>
-    <form method="POST" action="/login" class="form">
-      <label>用户名</label>
-      <input name="username" value="admin" />
-      <label>密码</label>
-      <input name="password" type="password" />
-      <button type="submit">登录</button>
-      <div class="hint" id="error" style="display:none;">用户名或密码错误</div>
-    </form>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="brand" style="margin-bottom: 10px;">
+        <div class="logo">🦀</div>
+        <div>
+          <div><strong>ClawPanel Lite</strong></div>
+          <div class="muted">轻量 OpenClaw 管理面板</div>
+        </div>
+      </div>
+      <form method="POST" action="/login" class="form">
+        <div class="row">
+          <label>用户名</label>
+          <input name="username" value="admin" />
+        </div>
+        <div class="row">
+          <label>密码</label>
+          <input name="password" type="password" />
+        </div>
+        <div class="actions">
+          <button type="submit">登录</button>
+        </div>
+        <div class="muted" id="error" style="display:none;color:#f87171;">用户名或密码错误</div>
+      </form>
+    </div>
   </div>
   <script>
     if (location.search.includes('error=1')) {
