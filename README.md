@@ -14,8 +14,9 @@
 - 一键安装 OpenClaw（页面按钮）
 - Cron 任务创建（简单运维）
 - 渠道配置（Telegram / QQ / Discord）
+- 配对码管理（list/approve）
 - 技能列表/检测/info
-- 浏览器管理（状态/启动/停止）
+- 浏览器管理（状态/启动/停止/打开URL/截图）
 - Chrome 插件安装/路径查看
 
 ## 运行

@@ -95,6 +95,28 @@
       </section>
 
       <section class="card">
+        <h2>配对 (Pairing)</h2>
+        <p class="muted">查看/批准配对码</p>
+        <div class="row">
+          <label>频道</label>
+          <select id="pairChannel">
+            <option value="telegram">telegram</option>
+            <option value="discord">discord</option>
+            <option value="qq">qq</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>配对码</label>
+          <input id="pairCode" placeholder="123456" />
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="listPairing()">查看待批准</button>
+          <button onclick="approvePairing()">批准配对</button>
+        </div>
+        <pre id="pairOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
         <h2>状态</h2>
         <p class="muted">查看 OpenClaw / Gateway 状态</p>
         <div class="actions">
@@ -135,6 +157,20 @@
           <button class="secondary" onclick="browserStatus()">状态</button>
           <button onclick="browserStart()">启动</button>
           <button class="danger" onclick="browserStop()">停止</button>
+        </div>
+        <div class="row">
+          <label>打开 URL</label>
+          <input id="browserUrl" placeholder="https://example.com" />
+        </div>
+        <div class="actions">
+          <button onclick="browserOpen()">打开</button>
+        </div>
+        <div class="row">
+          <label>截图路径</label>
+          <input id="shotPath" placeholder="/tmp/openclaw_screenshot.png" />
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="browserShot()">截图</button>
         </div>
         <div class="actions">
           <button onclick="installExtension()">安装 Chrome 插件</button>
@@ -282,6 +318,27 @@
       document.getElementById('channelStatus').textContent = out;
     }
 
+    async function listPairing() {
+      const ch = document.getElementById('pairChannel').value;
+      const r = await fetch('/api/pairing/list?channel=' + encodeURIComponent(ch));
+      const data = await r.json();
+      document.getElementById('pairOutput').textContent = data.output || '';
+    }
+
+    async function approvePairing() {
+      const payload = {
+        channel: document.getElementById('pairChannel').value,
+        code: document.getElementById('pairCode').value,
+      };
+      const r = await fetch('/api/pairing/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      document.getElementById('pairOutput').textContent = data.output || '';
+    }
+
     async function loadStatus() {
       const r = await fetch('/api/status');
       const data = await r.json();
@@ -393,6 +450,28 @@
 
     async function browserStop() {
       const r = await fetch('/api/browser/stop');
+      const data = await r.json();
+      document.getElementById('extOutput').textContent = data.output || '';
+    }
+
+    async function browserOpen() {
+      const payload = { url: document.getElementById('browserUrl').value };
+      const r = await fetch('/api/browser/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      document.getElementById('extOutput').textContent = data.output || '';
+    }
+
+    async function browserShot() {
+      const payload = { path: document.getElementById('shotPath').value };
+      const r = await fetch('/api/browser/screenshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       const data = await r.json();
       document.getElementById('extOutput').textContent = data.output || '';
     }

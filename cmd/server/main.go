@@ -92,6 +92,16 @@ type skillsPayload struct {
 	Skill  string `json:"skill"`
 }
 
+type pairingPayload struct {
+	Channel string `json:"channel"`
+	Code    string `json:"code"`
+}
+
+type browserPayload struct {
+	URL  string `json:"url"`
+	Path string `json:"path"`
+}
+
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
 
@@ -361,6 +371,30 @@ func main() {
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
+	mux.HandleFunc("/api/pairing/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		ch := r.URL.Query().Get("channel")
+		if ch == "" {
+			ch = "telegram"
+		}
+		out := runCmd(bin, withProfile(profile, "pairing", "list", ch)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/pairing/approve", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload pairingPayload
+		if err := json.Unmarshal(body, &payload); err != nil || payload.Channel == "" || payload.Code == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "pairing", "approve", payload.Channel, payload.Code)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
 	mux.HandleFunc("/api/browser/extension", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -387,6 +421,40 @@ func main() {
 
 	mux.HandleFunc("/api/browser/stop", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		out := runCmd(bin, withProfile(profile, "browser", "stop")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/browser/open", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload browserPayload
+		if err := json.Unmarshal(body, &payload); err != nil || strings.TrimSpace(payload.URL) == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "browser", "open", payload.URL)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/browser/screenshot", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload browserPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		path := payload.Path
+		if strings.TrimSpace(path) == "" {
+			path = "/tmp/openclaw_screenshot.png"
+		}
+		out := runCmd(bin, withProfile(profile, "browser", "screenshot", "--path", path)...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
