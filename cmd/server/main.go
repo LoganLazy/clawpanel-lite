@@ -61,13 +61,27 @@ type cronPayload struct {
 	Text     string `json:"text"`
 	Minutes  int    `json:"minutes"`
 	JobName  string `json:"jobName"`
-	Mode     string `json:"mode"`     // once|every
+	Mode     string `json:"mode"` // once|every
 }
 
 type apiTemplate struct {
 	Name    string `json:"name"`
 	BaseURL string `json:"baseUrl"`
 	Model   string `json:"model"`
+}
+
+type channelPayload struct {
+	TelegramToken string `json:"telegramToken"`
+	TelegramAllow string `json:"telegramAllow"`
+	QQAppID       string `json:"qqAppId"`
+	QQAppKey      string `json:"qqAppKey"`
+	QQBotToken    string `json:"qqBotToken"`
+	QQAllow       string `json:"qqAllow"`
+}
+
+type skillsPayload struct {
+	Action string `json:"action"` // list|check
+	Skill  string `json:"skill"`
 }
 
 func main() {
@@ -169,6 +183,52 @@ func main() {
 		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
+	mux.HandleFunc("/api/channels/get", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		path, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		cfg, err := os.ReadFile(path)
+		if err != nil {
+			http.Error(w, "failed to read config", http.StatusInternalServerError)
+			return
+		}
+		clean := jsonc.ToJSON(cfg)
+		payload := channelPayload{
+			TelegramToken: gjson.GetBytes(clean, "channels.telegram.botToken").String(),
+			TelegramAllow: strings.Join(gjson.GetBytes(clean, "channels.telegram.allowFrom").Array(), ","),
+			QQAppID:       gjson.GetBytes(clean, "channels.qq.appId").String(),
+			QQAppKey:      gjson.GetBytes(clean, "channels.qq.appKey").String(),
+			QQBotToken:    gjson.GetBytes(clean, "channels.qq.botToken").String(),
+			QQAllow:       strings.Join(gjson.GetBytes(clean, "channels.qq.allowFrom").Array(), ","),
+		}
+		writeJSON(w, payload)
+	}))
+
+	mux.HandleFunc("/api/channels/set", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		path, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload channelPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		if err := updateChannels(path, payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
 	mux.HandleFunc("/api/templates", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		templates := []apiTemplate{
 			{Name: "通义千问", BaseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", Model: "qwen-turbo"},
@@ -260,6 +320,39 @@ func main() {
 		job := "{\"name\":\"" + payload.JobName + "\",\"schedule\":" + sched + ",\"payload\":{\"kind\":\"systemEvent\",\"text\":\"" + escapeJSON(payload.Text) + "\"},\"sessionTarget\":\"main\"}"
 
 		out := runCmd(bin, withProfile(profile, "cron", "add", "--job", job)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/skills", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload skillsPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		action := strings.ToLower(strings.TrimSpace(payload.Action))
+		if action == "" {
+			action = "list"
+		}
+		out := runCmd(bin, withProfile(profile, "skills", action)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/browser/extension", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "browser", "extension", "install")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/browser/extension/path", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "browser", "extension", "path")...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
@@ -399,6 +492,66 @@ func updateConfigFile(path string, payload configPayload) error {
 	}
 
 	return nil
+}
+
+func updateChannels(path string, payload channelPayload) error {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read config failed: %w", err)
+	}
+
+	backup := path + ".bak"
+	_ = os.WriteFile(backup, raw, 0644)
+
+	clean := jsonc.ToJSON(raw)
+	if !gjson.ValidBytes(clean) {
+		return errors.New("config json invalid")
+	}
+
+	updated := clean
+	if payload.TelegramToken != "" {
+		updated, _ = sjson.SetBytes(updated, "channels.telegram.enabled", true)
+		updated, _ = sjson.SetBytes(updated, "channels.telegram.botToken", payload.TelegramToken)
+		if payload.TelegramAllow != "" {
+			updated, _ = sjson.SetBytes(updated, "channels.telegram.allowFrom", splitCSV(payload.TelegramAllow))
+		}
+	}
+
+	if payload.QQBotToken != "" {
+		updated, _ = sjson.SetBytes(updated, "channels.qq.enabled", true)
+		updated, _ = sjson.SetBytes(updated, "channels.qq.botToken", payload.QQBotToken)
+		if payload.QQAppID != "" {
+			updated, _ = sjson.SetBytes(updated, "channels.qq.appId", payload.QQAppID)
+		}
+		if payload.QQAppKey != "" {
+			updated, _ = sjson.SetBytes(updated, "channels.qq.appKey", payload.QQAppKey)
+		}
+		if payload.QQAllow != "" {
+			updated, _ = sjson.SetBytes(updated, "channels.qq.allowFrom", splitCSV(payload.QQAllow))
+		}
+	}
+
+	if err := os.WriteFile(path, updated, 0644); err != nil {
+		return fmt.Errorf("write config failed: %w", err)
+	}
+
+	if out := runCmd("openclaw", "config", "validate"); strings.Contains(strings.ToLower(out), "error") {
+		return fmt.Errorf("config validate failed: %s", out)
+	}
+
+	return nil
+}
+
+func splitCSV(v string) []string {
+	parts := strings.Split(v, ",")
+	out := []string{}
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func runCmd(name string, args ...string) string {

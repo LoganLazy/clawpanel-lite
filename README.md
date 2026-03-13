@@ -13,7 +13,9 @@
 - 简单聊天测试（调用 `openclaw agent`）
 - 一键安装 OpenClaw（页面按钮）
 - Cron 任务创建（简单运维）
-- 支持 OpenClaw profile（隔离测试环境）
+- 渠道配置（Telegram / QQ）
+- 技能列表/检测
+- 浏览器插件安装与路径查看
 
 ## 运行
 ```bash

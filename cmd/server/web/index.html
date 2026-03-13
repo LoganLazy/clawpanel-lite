@@ -47,6 +47,40 @@
       </section>
 
       <section class="card">
+        <h2>渠道配置</h2>
+        <p class="muted">Telegram / QQ 简易配置</p>
+        <div class="row">
+          <label>Telegram Bot Token</label>
+          <input id="tgToken" placeholder="123:abc" />
+        </div>
+        <div class="row">
+          <label>Telegram AllowFrom (逗号分隔)</label>
+          <input id="tgAllow" placeholder="tg:123,tg:456" />
+        </div>
+        <div class="row">
+          <label>QQ App ID</label>
+          <input id="qqAppId" placeholder="" />
+        </div>
+        <div class="row">
+          <label>QQ App Key</label>
+          <input id="qqAppKey" placeholder="" />
+        </div>
+        <div class="row">
+          <label>QQ Bot Token</label>
+          <input id="qqBotToken" placeholder="" />
+        </div>
+        <div class="row">
+          <label>QQ AllowFrom (逗号分隔)</label>
+          <input id="qqAllow" placeholder="qq:123,qq:456" />
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="loadChannels()">刷新</button>
+          <button onclick="saveChannels()">保存</button>
+        </div>
+        <pre id="channelStatus" class="status"></pre>
+      </section>
+
+      <section class="card">
         <h2>状态</h2>
         <p class="muted">查看 OpenClaw / Gateway 状态</p>
         <div class="actions">
@@ -63,6 +97,26 @@
           <button class="secondary" onclick="loadLogs()">刷新日志</button>
         </div>
         <pre id="logsOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
+        <h2>技能</h2>
+        <p class="muted">列出/检测技能</p>
+        <div class="actions">
+          <button class="secondary" onclick="listSkills()">列出技能</button>
+          <button onclick="checkSkills()">检测依赖</button>
+        </div>
+        <pre id="skillsOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
+        <h2>浏览器插件</h2>
+        <p class="muted">安装 OpenClaw Chrome 插件</p>
+        <div class="actions">
+          <button onclick="installExtension()">安装插件</button>
+          <button class="secondary" onclick="extensionPath()">查看插件路径</button>
+        </div>
+        <pre id="extOutput" class="status"></pre>
       </section>
 
       <section class="card">
@@ -164,6 +218,40 @@
       document.getElementById('configStatus').textContent = out;
     }
 
+    async function loadChannels() {
+      const r = await fetch('/api/channels/get');
+      if (!r.ok) {
+        document.getElementById('channelStatus').textContent = '读取失败';
+        return;
+      }
+      const data = await r.json();
+      document.getElementById('tgToken').value = data.telegramToken || '';
+      document.getElementById('tgAllow').value = data.telegramAllow || '';
+      document.getElementById('qqAppId').value = data.qqAppId || '';
+      document.getElementById('qqAppKey').value = data.qqAppKey || '';
+      document.getElementById('qqBotToken').value = data.qqBotToken || '';
+      document.getElementById('qqAllow').value = data.qqAllow || '';
+      document.getElementById('channelStatus').textContent = '已加载';
+    }
+
+    async function saveChannels() {
+      const payload = {
+        telegramToken: document.getElementById('tgToken').value,
+        telegramAllow: document.getElementById('tgAllow').value,
+        qqAppId: document.getElementById('qqAppId').value,
+        qqAppKey: document.getElementById('qqAppKey').value,
+        qqBotToken: document.getElementById('qqBotToken').value,
+        qqAllow: document.getElementById('qqAllow').value,
+      };
+      const r = await fetch('/api/channels/set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('channelStatus').textContent = out;
+    }
+
     async function loadStatus() {
       const r = await fetch('/api/status');
       const data = await r.json();
@@ -218,6 +306,38 @@
       document.getElementById('cronOutput').textContent = JSON.stringify(data, null, 2);
     }
 
+    async function listSkills() {
+      const r = await fetch('/api/skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list' })
+      });
+      const data = await r.json();
+      document.getElementById('skillsOutput').textContent = data.output || '';
+    }
+
+    async function checkSkills() {
+      const r = await fetch('/api/skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check' })
+      });
+      const data = await r.json();
+      document.getElementById('skillsOutput').textContent = data.output || '';
+    }
+
+    async function installExtension() {
+      const r = await fetch('/api/browser/extension', { method: 'POST' });
+      const data = await r.json();
+      document.getElementById('extOutput').textContent = data.output || '';
+    }
+
+    async function extensionPath() {
+      const r = await fetch('/api/browser/extension/path');
+      const data = await r.json();
+      document.getElementById('extOutput').textContent = data.output || '';
+    }
+
     async function loadTemplates() {
       const r = await fetch('/api/templates');
       const data = await r.json();
@@ -239,6 +359,7 @@
 
     detectConfig();
     loadConfig();
+    loadChannels();
     loadTemplates();
   </script>
 </body>
