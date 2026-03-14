@@ -56,6 +56,21 @@
       </section>
 
       <section class="card">
+        <h2>日志搜索/下载</h2>
+        <p class="muted">关键字过滤 + 下载</p>
+        <div class="row">
+          <label>关键词</label>
+          <input id="logQuery" placeholder="error / warn" />
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="loadLogs()">刷新日志</button>
+          <button onclick="searchLogs()">搜索</button>
+          <a class="link-btn" href="/api/logs/download" target="_blank">下载日志</a>
+        </div>
+        <pre id="logsOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
         <h2>渠道配置</h2>
         <p class="muted">Telegram / QQ / Discord 简易配置</p>
         <div class="row">
@@ -115,6 +130,27 @@
       </section>
 
       <section class="card">
+        <h2>配置备份 / 恢复</h2>
+        <p class="muted">保护配置，快速回滚</p>
+        <div class="row">
+          <label>备份名称</label>
+          <input id="backupName" placeholder="auto-20260313" />
+        </div>
+        <div class="actions">
+          <button onclick="createBackup()">创建备份</button>
+          <button class="secondary" onclick="listBackups()">查看备份</button>
+        </div>
+        <div class="row">
+          <label>恢复备份（文件名）</label>
+          <input id="restoreName" placeholder="20260313-123000.json" />
+        </div>
+        <div class="actions">
+          <button class="danger" onclick="restoreBackup()">恢复</button>
+        </div>
+        <pre id="backupOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
         <h2>配对 (Pairing)</h2>
         <p class="muted">查看/批准配对码</p>
         <div class="row">
@@ -147,12 +183,20 @@
       </section>
 
       <section class="card">
-        <h2>日志</h2>
-        <p class="muted">最近 200 行日志</p>
+        <h2>Cron 管理</h2>
+        <p class="muted">列表 / 删除 / 运行历史</p>
         <div class="actions">
-          <button class="secondary" onclick="loadLogs()">刷新日志</button>
+          <button class="secondary" onclick="listCron()">列出任务</button>
         </div>
-        <pre id="logsOutput" class="status"></pre>
+        <div class="row">
+          <label>任务 ID</label>
+          <input id="cronId" placeholder="job-id" />
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="cronRuns()">查看历史</button>
+          <button class="danger" onclick="cronRemove()">删除任务</button>
+        </div>
+        <pre id="cronManage" class="status"></pre>
       </section>
 
       <section class="card">
@@ -324,6 +368,23 @@
         (data.uname || '') + '\n' + (data.uptime || '') + '\n' + (data.disk || '') + '\n' + (data.mem || '');
     }
 
+    async function loadLogs() {
+      const r = await fetch('/api/logs');
+      const data = await r.json();
+      document.getElementById('logsOutput').textContent = data.output || '';
+    }
+
+    async function searchLogs() {
+      const payload = { query: document.getElementById('logQuery').value };
+      const r = await fetch('/api/logs/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      document.getElementById('logsOutput').textContent = data.output || '';
+    }
+
     async function loadChannels() {
       const r = await fetch('/api/channels/get');
       if (!r.ok) {
@@ -382,6 +443,34 @@
       document.getElementById('channelsRawStatus').textContent = out;
     }
 
+    async function createBackup() {
+      const payload = { name: document.getElementById('backupName').value };
+      const r = await fetch('/api/backups/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('backupOutput').textContent = out;
+    }
+
+    async function listBackups() {
+      const r = await fetch('/api/backups/list');
+      const data = await r.json();
+      document.getElementById('backupOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function restoreBackup() {
+      const payload = { name: document.getElementById('restoreName').value };
+      const r = await fetch('/api/backups/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('backupOutput').textContent = out;
+    }
+
     async function listPairing() {
       const ch = document.getElementById('pairChannel').value;
       const r = await fetch('/api/pairing/list?channel=' + encodeURIComponent(ch));
@@ -409,16 +498,34 @@
       document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
     }
 
-    async function loadLogs() {
-      const r = await fetch('/api/logs');
-      const data = await r.json();
-      document.getElementById('logsOutput').textContent = data.output || '';
-    }
-
     async function restartGateway() {
       const r = await fetch('/api/gateway/restart', { method: 'POST' });
       const data = await r.json();
       document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function listCron() {
+      const r = await fetch('/api/cron/list');
+      const data = await r.json();
+      document.getElementById('cronManage').textContent = data.output || '';
+    }
+
+    async function cronRuns() {
+      const id = document.getElementById('cronId').value;
+      const r = await fetch('/api/cron/runs?id=' + encodeURIComponent(id));
+      const data = await r.json();
+      document.getElementById('cronManage').textContent = data.output || '';
+    }
+
+    async function cronRemove() {
+      const payload = { id: document.getElementById('cronId').value };
+      const r = await fetch('/api/cron/rm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      document.getElementById('cronManage').textContent = data.output || '';
     }
 
     async function sendChat() {

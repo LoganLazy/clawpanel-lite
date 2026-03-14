@@ -76,6 +76,10 @@ type cronPayload struct {
 	Mode     string `json:"mode"` // once|every
 }
 
+type cronAction struct {
+	ID string `json:"id"`
+}
+
 type apiTemplate struct {
 	Name    string `json:"name"`
 	BaseURL string `json:"baseUrl"`
@@ -124,6 +128,18 @@ type skillEntry struct {
 	Path   string `json:"path"`
 	Target string `json:"target"`
 	Git    string `json:"git"`
+}
+
+type logQuery struct {
+	Query string `json:"query"`
+}
+
+type backupPayload struct {
+	Name string `json:"name"`
+}
+
+type restorePayload struct {
+	Name string `json:"name"`
 }
 
 func main() {
@@ -352,6 +368,37 @@ func main() {
 		writeJSON(w, logsResp{Output: out})
 	}))
 
+	mux.HandleFunc("/api/logs/search", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload logQuery
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "logs", "--limit", "400", "--plain")...)
+		if payload.Query != "" {
+			filtered := []string{}
+			for _, line := range strings.Split(out, "\n") {
+				if strings.Contains(strings.ToLower(line), strings.ToLower(payload.Query)) {
+					filtered = append(filtered, line)
+				}
+			}
+			out = strings.Join(filtered, "\n")
+		}
+		writeJSON(w, logsResp{Output: out})
+	}))
+
+	mux.HandleFunc("/api/logs/download", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "logs", "--limit", "800", "--plain")...)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Content-Disposition", "attachment; filename=clawpanel-logs.txt")
+		_, _ = w.Write([]byte(out))
+	}))
+
 	mux.HandleFunc("/api/gateway/restart", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -420,6 +467,36 @@ func main() {
 		job := "{\"name\":\"" + payload.JobName + "\",\"schedule\":" + sched + ",\"payload\":{\"kind\":\"systemEvent\",\"text\":\"" + escapeJSON(payload.Text) + "\"},\"sessionTarget\":\"main\"}"
 
 		out := runCmd(bin, withProfile(profile, "cron", "add", "--job", job)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/cron/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "cron", "list")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/cron/runs", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			http.Error(w, "id required", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "cron", "runs", id)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/cron/rm", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload cronAction
+		if err := json.Unmarshal(body, &payload); err != nil || payload.ID == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "cron", "rm", payload.ID)...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
@@ -501,6 +578,58 @@ func main() {
 			return
 		}
 		if err := removeSkill(payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
+	mux.HandleFunc("/api/backups/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		items := listBackups()
+		writeJSON(w, items)
+	}))
+
+	mux.HandleFunc("/api/backups/create", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload backupPayload
+		_ = json.Unmarshal(body, &payload)
+		name := payload.Name
+		if strings.TrimSpace(name) == "" {
+			name = time.Now().Format("20060102-150405")
+		}
+		path, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		if err := createBackup(path, name); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
+	mux.HandleFunc("/api/backups/restore", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload restorePayload
+		if err := json.Unmarshal(body, &payload); err != nil || payload.Name == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		path, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		if err := restoreBackup(path, payload.Name); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -979,6 +1108,65 @@ func firstGuild(clean []byte) (string, string) {
 		return k, users
 	}
 	return "", ""
+}
+
+func listBackups() []string {
+	path, found := detectConfigPath()
+	if !found {
+		return []string{}
+	}
+	backupDir := filepath.Dir(path) + "/backups"
+	items, err := os.ReadDir(backupDir)
+	if err != nil {
+		return []string{}
+	}
+	out := []string{}
+	for _, it := range items {
+		if it.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(it.Name(), ".json") || strings.HasSuffix(it.Name(), ".json5") {
+			out = append(out, it.Name())
+		}
+	}
+	return out
+}
+
+func createBackup(configPath string, name string) error {
+	backupDir := filepath.Dir(configPath) + "/backups"
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		return err
+	}
+	src, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+	if !strings.HasSuffix(name, ".json") && !strings.HasSuffix(name, ".json5") {
+		name = name + ".json"
+	}
+	dest := filepath.Join(backupDir, name)
+	return os.WriteFile(dest, src, 0644)
+}
+
+func restoreBackup(configPath string, name string) error {
+	backupDir := filepath.Dir(configPath) + "/backups"
+	path := filepath.Join(backupDir, name)
+	if !fileExists(path) {
+		return errors.New("backup not found")
+	}
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	backup := configPath + ".bak"
+	_ = os.WriteFile(backup, src, 0644)
+	if err := os.WriteFile(configPath, src, 0644); err != nil {
+		return err
+	}
+	if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
+		return fmt.Errorf("config validate failed: %s", out)
+	}
+	return nil
 }
 
 func runCmd(name string, args ...string) string {
