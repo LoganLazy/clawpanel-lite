@@ -451,6 +451,9 @@ func main() {
 			url = installScriptCN
 		}
 		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash")
+		if strings.Contains(out, "installed successfully") && strings.Contains(out, "/dev/tty") {
+			out = out + "\n\nNOTE: OpenClaw 已安装，但最后的交互式 setup 需要 TTY。\n请在终端执行：openclaw setup"
+		}
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
