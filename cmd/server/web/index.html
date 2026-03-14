@@ -238,6 +238,7 @@
         <p class="muted">可在面板内编辑常用技能列表</p>
         <div class="actions">
           <button class="secondary" onclick="loadCommonSkills()">加载列表</button>
+          <button class="secondary" onclick="importCommonSkillsSample()">导入示例</button>
           <button onclick="saveCommonSkills()">保存列表</button>
         </div>
         <textarea id="commonSkills" rows="6" placeholder='[{"name":"skill-a","gitUrl":"https://...","target":"managed"}]'></textarea>
@@ -662,7 +663,16 @@
       document.getElementById('skillsOutput').textContent = out;
     }
 
-    async function loadCommonSkills() {
+        function importCommonSkillsSample() {
+      const sample = [
+        { name: 'skill-a', gitUrl: 'https://github.com/your/skill-a.git', target: 'managed' },
+        { name: 'skill-b', gitUrl: 'https://github.com/your/skill-b.git', target: 'workspace' }
+      ];
+      document.getElementById('commonSkills').value = JSON.stringify(sample, null, 2);
+      document.getElementById('commonSkillsOutput').textContent = '已导入示例清单';
+    }
+
+async function loadCommonSkills() {
       const r = await fetch('/api/skills/common/list');
       const data = await r.json();
       document.getElementById('commonSkills').value = JSON.stringify(data, null, 2);
