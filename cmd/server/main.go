@@ -165,7 +165,7 @@ func main() {
 	pass := envOr("CLAWPANEL_PASS", defaultPass)
 	bin := envOr("CLAWPANEL_OPENCLAW_BIN", "openclaw")
 	installScript := envOr("CLAWPANEL_INSTALL_SCRIPT", "https://openclaw.ai/install.sh")
-	installScriptCN := envOr("CLAWPANEL_INSTALL_SCRIPT_CN", installScript)
+	installScriptCN := envOr("CLAWPANEL_INSTALL_SCRIPT_CN", "https://clawd.org.cn/install.sh")
 	profile := envOr("CLAWPANEL_PROFILE", "")
 
 	gOpenclawBin = bin

@@ -37,7 +37,6 @@
         <button class="nav-item" data-target="browser">浏览器</button>
         <button class="nav-item" data-target="chat">聊天测试</button>
         <button class="nav-item" data-target="cron-create">Cron 创建</button>
-        <button class="nav-item" data-target="install">安装 OpenClaw</button>
         <button class="nav-item" data-target="config-path">配置文件</button>
       </aside>
 
@@ -374,27 +373,7 @@
           <pre id="cronOutput" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="install">
-          <h2>安装 OpenClaw</h2>
-          <p class="muted">如未安装，可一键安装</p>
-          <div class="actions">
-            <select id="installVersion2">
-              <option value="normal">普通版</option>
-              <option value="cn">CN 版</option>
-            </select>
-            <button onclick="installOpenClawSafe()">一键安装</button>
-          </div>
-          <pre id="installOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="config-path">
-          <h2>配置文件</h2>
-          <p class="muted">自动探测配置路径</p>
-          <div class="actions">
-            <button class="secondary" onclick="detectConfig()">探测配置路径</button>
-          </div>
-          <pre id="configPath" class="status"></pre>
-        </section>
+        
       </main>
     </div>
   </div>
@@ -659,7 +638,7 @@ async function detectConfig() {
     }
 
     async function installOpenClaw() {
-      const version = (document.getElementById('installVersion') || document.getElementById('installVersion2'))?.value || 'normal';
+      const version = (document.getElementById('installVersion'))?.value || 'normal';
       document.getElementById('dashOutput').textContent = '安装中...';
       document.getElementById('installOutput').textContent = '安装中...';
       const r = await fetch('/api/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version }) });
