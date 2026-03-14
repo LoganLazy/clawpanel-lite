@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -779,8 +780,8 @@ func main() {
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
-	fs := http.FileServer(http.FS(webFS))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	fs, _ := fs.Sub(webFS, "web")
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(fs))))
 
 	addr := ":" + port
 	log.Info().Msgf("ClawPanel Lite listening on %s", addr)
