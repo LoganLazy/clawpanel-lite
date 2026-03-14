@@ -117,6 +117,14 @@
             <button onclick="searchLogs()">搜索</button>
             <a class="link-btn" href="/api/logs/download" target="_blank">下载日志</a>
           </div>
+          <div class="row">
+            <label>自动刷新</label>
+            <select id="logAutoInterval">
+              <option value="0">关闭</option>
+              <option value="5000">5 秒</option>
+              <option value="10000">10 秒</option>
+            </select>
+          </div>
           <pre id="logsOutput" class="status"></pre>
         </section>
 
@@ -191,6 +199,13 @@
             <button class="secondary" onclick="listBackups()">查看备份</button>
           </div>
           <div class="row">
+            <label>下载备份（文件名）</label>
+            <input id="downloadName" placeholder="20260313-123000.json" />
+          </div>
+          <div class="actions">
+            <a id="backupDownloadLink" class="link-btn" href="#" onclick="downloadBackup(); return false;">下载备份</a>
+          </div>
+          <div class="row">
             <label>恢复备份（文件名）</label>
             <input id="restoreName" placeholder="20260313-123000.json" />
           </div>
@@ -225,6 +240,10 @@
         <section class="card section" data-section="status">
           <h2>状态</h2>
           <p class="muted">查看 OpenClaw / Gateway 状态</p>
+          <div class="row" id="statusPills">
+            <div class="pill" id="openclawPill">OpenClaw: 未知</div>
+            <div class="pill" id="gatewayPill">Gateway: 未知</div>
+          </div>
           <div class="actions">
             <button class="secondary" onclick="loadStatus()">刷新状态</button>
             <button class="danger" onclick="restartGateway()">重启 Gateway</button>
@@ -395,6 +414,7 @@
 
   <script>
             let latencyBuffer = [];
+    let logTimer = null;
 let installBusy = false;
 
 function setActiveSection(name) {
@@ -479,7 +499,15 @@ async function detectConfig() {
         (data.uname || '') + '\n' + (data.uptime || '') + '\n' + (data.disk || '') + '\n' + (data.mem || '');
     }
 
-    async function loadLogs() {
+        function setLogAuto() {
+      const interval = parseInt(document.getElementById('logAutoInterval').value || '0', 10);
+      if (logTimer) clearInterval(logTimer);
+      if (interval > 0) {
+        logTimer = setInterval(loadLogs, interval);
+      }
+    }
+
+async function loadLogs() {
       const r = await fetch('/api/logs');
       const data = await r.json();
       document.getElementById('logsOutput').textContent = data.output || '';
@@ -554,7 +582,18 @@ async function detectConfig() {
       document.getElementById('channelsRawStatus').textContent = out;
     }
 
-    async function createBackup() {
+        function downloadBackup() {
+      const name = document.getElementById('downloadName').value;
+      if (!name) {
+        document.getElementById('backupOutput').textContent = '请输入备份文件名';
+        return;
+      }
+      const link = document.getElementById('backupDownloadLink');
+      link.href = '/api/backups/download?name=' + encodeURIComponent(name);
+      link.click();
+    }
+
+async function createBackup() {
       const payload = { name: document.getElementById('backupName').value };
       const r = await fetch('/api/backups/create', {
         method: 'POST',
@@ -607,12 +646,40 @@ async function detectConfig() {
       const r = await fetch('/api/status');
       const data = await r.json();
       document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
+      const openclawOk = (data.openclaw || '').toLowerCase().includes('running');
+      const gatewayOk = (data.gateway || '').toLowerCase().includes('running');
+      const openPill = document.getElementById('openclawPill');
+      const gatePill = document.getElementById('gatewayPill');
+      if (openPill) {
+        openPill.textContent = openclawOk ? 'OpenClaw: 运行中' : 'OpenClaw: 未知';
+        openPill.classList.toggle('ok', openclawOk);
+        openPill.classList.toggle('fail', !openclawOk);
+      }
+      if (gatePill) {
+        gatePill.textContent = gatewayOk ? 'Gateway: 运行中' : 'Gateway: 未知';
+        gatePill.classList.toggle('ok', gatewayOk);
+        gatePill.classList.toggle('fail', !gatewayOk);
+      }
     }
 
     async function restartGateway() {
       const r = await fetch('/api/gateway/restart', { method: 'POST' });
       const data = await r.json();
       document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
+      const openclawOk = (data.openclaw || '').toLowerCase().includes('running');
+      const gatewayOk = (data.gateway || '').toLowerCase().includes('running');
+      const openPill = document.getElementById('openclawPill');
+      const gatePill = document.getElementById('gatewayPill');
+      if (openPill) {
+        openPill.textContent = openclawOk ? 'OpenClaw: 运行中' : 'OpenClaw: 未知';
+        openPill.classList.toggle('ok', openclawOk);
+        openPill.classList.toggle('fail', !openclawOk);
+      }
+      if (gatePill) {
+        gatePill.textContent = gatewayOk ? 'Gateway: 运行中' : 'Gateway: 未知';
+        gatePill.classList.toggle('ok', gatewayOk);
+        gatePill.classList.toggle('fail', !gatewayOk);
+      }
     }
 
     async function listCron() {
