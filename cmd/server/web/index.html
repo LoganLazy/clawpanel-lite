@@ -104,6 +104,17 @@
       </section>
 
       <section class="card">
+        <h2>渠道原始配置</h2>
+        <p class="muted">高级渠道配置（JSON）</p>
+        <textarea id="channelsRaw" rows="6" placeholder='{"discord":{...}}'></textarea>
+        <div class="actions">
+          <button class="secondary" onclick="loadChannelsRaw()">加载原始配置</button>
+          <button onclick="saveChannelsRaw()">保存原始配置</button>
+        </div>
+        <pre id="channelsRawStatus" class="status"></pre>
+      </section>
+
+      <section class="card">
         <h2>配对 (Pairing)</h2>
         <p class="muted">查看/批准配对码</p>
         <div class="row">
@@ -146,7 +157,7 @@
 
       <section class="card">
         <h2>技能</h2>
-        <p class="muted">列出/检测技能</p>
+        <p class="muted">列出/检测技能 + 本地安装管理</p>
         <div class="row">
           <label>技能名（info 可选）</label>
           <input id="skillName" placeholder="skill-id" />
@@ -155,6 +166,25 @@
           <button class="secondary" onclick="listSkills()">列出技能</button>
           <button onclick="checkSkills()">检测依赖</button>
           <button class="secondary" onclick="infoSkill()">详情 info</button>
+        </div>
+        <div class="row">
+          <label>本地技能清单</label>
+          <button class="secondary" onclick="listLocalSkills()">刷新本地技能</button>
+        </div>
+        <pre id="skillsLocal" class="status"></pre>
+        <div class="row">
+          <label>安装/更新/移除技能</label>
+          <input id="skillGit" placeholder="https://github.com/xxx/skill.git" />
+          <input id="skillInstallName" placeholder="可选：技能名" />
+          <select id="skillTarget">
+            <option value="managed">managed (~/.openclaw/skills)</option>
+            <option value="workspace">workspace (workspace/skills)</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button onclick="installSkillLocal()">安装</button>
+          <button class="secondary" onclick="updateSkillLocal()">更新</button>
+          <button class="danger" onclick="removeSkillLocal()">移除</button>
         </div>
         <pre id="skillsOutput" class="status"></pre>
       </section>
@@ -334,6 +364,24 @@
       document.getElementById('channelStatus').textContent = out;
     }
 
+    async function loadChannelsRaw() {
+      const r = await fetch('/api/channels/raw/get');
+      const data = await r.json();
+      document.getElementById('channelsRaw').value = data.raw || '{}';
+      document.getElementById('channelsRawStatus').textContent = '已加载';
+    }
+
+    async function saveChannelsRaw() {
+      const payload = { raw: document.getElementById('channelsRaw').value };
+      const r = await fetch('/api/channels/raw/set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('channelsRawStatus').textContent = out;
+    }
+
     async function listPairing() {
       const ch = document.getElementById('pairChannel').value;
       const r = await fetch('/api/pairing/list?channel=' + encodeURIComponent(ch));
@@ -438,6 +486,55 @@
       });
       const data = await r.json();
       document.getElementById('skillsOutput').textContent = data.output || '';
+    }
+
+    async function listLocalSkills() {
+      const r = await fetch('/api/skills/local/list');
+      const data = await r.json();
+      document.getElementById('skillsLocal').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function installSkillLocal() {
+      const payload = {
+        gitUrl: document.getElementById('skillGit').value,
+        name: document.getElementById('skillInstallName').value,
+        target: document.getElementById('skillTarget').value,
+      };
+      const r = await fetch('/api/skills/local/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('skillsOutput').textContent = out;
+    }
+
+    async function updateSkillLocal() {
+      const payload = {
+        name: document.getElementById('skillInstallName').value,
+        target: document.getElementById('skillTarget').value,
+      };
+      const r = await fetch('/api/skills/local/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('skillsOutput').textContent = out;
+    }
+
+    async function removeSkillLocal() {
+      const payload = {
+        name: document.getElementById('skillInstallName').value,
+        target: document.getElementById('skillTarget').value,
+      };
+      const r = await fetch('/api/skills/local/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('skillsOutput').textContent = out;
     }
 
     async function installExtension() {

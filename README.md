@@ -15,8 +15,10 @@
 - 一键安装 OpenClaw（页面按钮）
 - Cron 任务创建（简单运维）
 - 渠道配置（Telegram / QQ / Discord）
+- 渠道原始配置（JSON 编辑）
 - 配对码管理（list/approve）
 - 技能列表/检测/info
+- 技能管理（Git 安装/更新/移除）
 - 浏览器管理（状态/启动/停止/打开URL/截图）
 - Chrome 插件安装/路径查看
 
@@ -37,6 +39,8 @@
 - `CLAWPANEL_OPENCLAW_BIN=/path/to/openclaw`
 - `CLAWPANEL_INSTALL_SCRIPT=https://openclaw.ai/install.sh`
 - `CLAWPANEL_PROFILE=dev` （使用 `openclaw --profile dev`）
+- `CLAWPANEL_SKILLS_DIR=/custom/skills`
+- `CLAWPANEL_WORKSPACE=/custom/workspace`
 
 ## 构建
 ```bash

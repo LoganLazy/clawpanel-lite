@@ -109,6 +109,23 @@ type browserPayload struct {
 	Path string `json:"path"`
 }
 
+type rawPayload struct {
+	Raw string `json:"raw"`
+}
+
+type skillManagePayload struct {
+	Name   string `json:"name"`
+	GitURL string `json:"gitUrl"`
+	Target string `json:"target"` // managed|workspace
+}
+
+type skillEntry struct {
+	Name   string `json:"name"`
+	Path   string `json:"path"`
+	Target string `json:"target"`
+	Git    string `json:"git"`
+}
+
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
 
@@ -261,6 +278,48 @@ func main() {
 		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
+	mux.HandleFunc("/api/channels/raw/get", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		path, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		cfg, err := os.ReadFile(path)
+		if err != nil {
+			http.Error(w, "failed to read config", http.StatusInternalServerError)
+			return
+		}
+		clean := jsonc.ToJSON(cfg)
+		raw := gjson.GetBytes(clean, "channels").Raw
+		if raw == "" {
+			raw = "{}"
+		}
+		writeJSON(w, map[string]string{"raw": raw})
+	}))
+
+	mux.HandleFunc("/api/channels/raw/set", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		path, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload rawPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		if err := updateChannelsRaw(path, payload.Raw); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
 	mux.HandleFunc("/api/templates", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		templates := []apiTemplate{
 			{Name: "通义千问", BaseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", Model: "qwen-turbo"},
@@ -355,7 +414,6 @@ func main() {
 
 		sched := "{\"kind\":\"every\",\"everyMs\":" + fmt.Sprintf("%d", payload.Minutes*60*1000) + "}"
 		if mode == "once" {
-			// one-shot in minutes
 			at := time.Now().Add(time.Duration(payload.Minutes) * time.Minute).Format(time.RFC3339)
 			sched = "{\"kind\":\"at\",\"at\":\"" + at + "\"}"
 		}
@@ -373,7 +431,7 @@ func main() {
 		body, _ := io.ReadAll(r.Body)
 		var payload skillsPayload
 		if err := json.Unmarshal(body, &payload); err != nil {
-			http.Error(w, "invalid payload", http.StatusBadRequest)
+			http.Error(w, "invalid json", http.StatusBadRequest)
 			return
 		}
 		action := strings.ToLower(strings.TrimSpace(payload.Action))
@@ -386,6 +444,67 @@ func main() {
 		}
 		out := runCmd(bin, args...)
 		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/skills/local/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		entries := []skillEntry{}
+		entries = append(entries, listLocalSkills(skillsDirManaged(), "managed")...)
+		entries = append(entries, listLocalSkills(skillsDirWorkspace(), "workspace")...)
+		writeJSON(w, entries)
+	}))
+
+	mux.HandleFunc("/api/skills/local/install", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload skillManagePayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		if err := installSkill(payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
+	mux.HandleFunc("/api/skills/local/update", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload skillManagePayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		if err := updateSkill(payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
+	mux.HandleFunc("/api/skills/local/remove", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload skillManagePayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		if err := removeSkill(payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
 	mux.HandleFunc("/api/pairing/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
@@ -671,6 +790,160 @@ func updateChannels(path string, payload channelPayload) error {
 	}
 
 	return nil
+}
+
+func updateChannelsRaw(path string, raw string) error {
+	if strings.TrimSpace(raw) == "" {
+		return errors.New("raw channels is empty")
+	}
+
+	parsed := jsonc.ToJSON([]byte(raw))
+	if !gjson.ValidBytes(parsed) {
+		return errors.New("channels json invalid")
+	}
+
+	cfg, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read config failed: %w", err)
+	}
+
+	backup := path + ".bak"
+	_ = os.WriteFile(backup, cfg, 0644)
+
+	clean := jsonc.ToJSON(cfg)
+	updated, err := sjson.SetRawBytes(clean, "channels", parsed)
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(path, updated, 0644); err != nil {
+		return fmt.Errorf("write config failed: %w", err)
+	}
+
+	if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
+		return fmt.Errorf("config validate failed: %s", out)
+	}
+
+	return nil
+}
+
+func skillsDirManaged() string {
+	if v := os.Getenv("CLAWPANEL_SKILLS_DIR"); v != "" {
+		return expand(v)
+	}
+	return expand("~/.openclaw/skills")
+}
+
+func skillsDirWorkspace() string {
+	ws := envOr("CLAWPANEL_WORKSPACE", "~/.openclaw/workspace")
+	return filepath.Join(expand(ws), "skills")
+}
+
+func listLocalSkills(base string, target string) []skillEntry {
+	entries := []skillEntry{}
+	st, err := os.Stat(base)
+	if err != nil || !st.IsDir() {
+		return entries
+	}
+	items, _ := os.ReadDir(base)
+	for _, it := range items {
+		if !it.IsDir() || strings.HasPrefix(it.Name(), ".") {
+			continue
+		}
+		path := filepath.Join(base, it.Name())
+		git := runCmd("git", "-C", path, "remote", "get-url", "origin")
+		entries = append(entries, skillEntry{Name: it.Name(), Path: path, Target: target, Git: strings.TrimSpace(git)})
+	}
+	return entries
+}
+
+func installSkill(payload skillManagePayload) error {
+	if strings.TrimSpace(payload.GitURL) == "" {
+		return errors.New("gitUrl is required")
+	}
+	name := strings.TrimSpace(payload.Name)
+	if name == "" {
+		name = inferNameFromGit(payload.GitURL)
+	}
+	if !validName(name) {
+		return errors.New("invalid name")
+	}
+	base := skillsDirManaged()
+	if strings.ToLower(payload.Target) == "workspace" {
+		base = skillsDirWorkspace()
+	}
+	if err := os.MkdirAll(base, 0755); err != nil {
+		return err
+	}
+	dest := filepath.Join(base, name)
+	if fileExists(dest) {
+		return errors.New("skill already exists")
+	}
+	out := runCmd("git", "clone", payload.GitURL, dest)
+	if strings.Contains(strings.ToLower(out), "error") {
+		return errors.New(out)
+	}
+	return nil
+}
+
+func updateSkill(payload skillManagePayload) error {
+	name := strings.TrimSpace(payload.Name)
+	if !validName(name) {
+		return errors.New("invalid name")
+	}
+	base := skillsDirManaged()
+	if strings.ToLower(payload.Target) == "workspace" {
+		base = skillsDirWorkspace()
+	}
+	path := filepath.Join(base, name)
+	if !fileExists(path) {
+		return errors.New("skill not found")
+	}
+	out := runCmd("git", "-C", path, "pull")
+	if strings.Contains(strings.ToLower(out), "error") {
+		return errors.New(out)
+	}
+	return nil
+}
+
+func removeSkill(payload skillManagePayload) error {
+	name := strings.TrimSpace(payload.Name)
+	if !validName(name) {
+		return errors.New("invalid name")
+	}
+	base := skillsDirManaged()
+	if strings.ToLower(payload.Target) == "workspace" {
+		base = skillsDirWorkspace()
+	}
+	path := filepath.Join(base, name)
+	if !fileExists(path) {
+		return errors.New("skill not found")
+	}
+	trash := filepath.Join(base, ".trash")
+	if err := os.MkdirAll(trash, 0755); err != nil {
+		return err
+	}
+	newName := fmt.Sprintf("%s-%d", name, time.Now().Unix())
+	return os.Rename(path, filepath.Join(trash, newName))
+}
+
+func inferNameFromGit(url string) string {
+	parts := strings.Split(strings.TrimRight(url, "/"), "/")
+	name := parts[len(parts)-1]
+	name = strings.TrimSuffix(name, ".git")
+	return name
+}
+
+func validName(name string) bool {
+	if name == "" {
+		return false
+	}
+	for _, r := range name {
+		if !(r == '-' || r == '_' || (r >= '0' && r <= '9') || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z')) {
+			return false
+		}
+	}
+	return true
 }
 
 func splitCSV(v string) []string {
