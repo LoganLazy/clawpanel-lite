@@ -503,19 +503,27 @@ func main() {
 		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
-	mux.HandleFunc("/api/openclaw/version", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
-		version := strings.TrimSpace(openclawVersion(bin, profile))
-		writeJSON(w, map[string]string{"version": version})
-	}))
-
-	mux.HandleFunc("/api/openclaw/update/check", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
-		current := strings.TrimSpace(openclawVersion(bin, profile))
-		latest := strings.TrimSpace(runCmd("bash", "-lc", "command -v npm >/dev/null 2>&1 && npm view openclaw version || true"))
-		hasUpdate := false
-		if latest != "" && current != "" && !strings.Contains(current, latest) {
-			hasUpdate = true
+	mux.HandleFunc("/api/install", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
 		}
-		writeJSON(w, map[string]interface{}{"current": current, "latest": latest, "hasUpdate": hasUpdate, "installed": current != ""})
+		body, _ := io.ReadAll(r.Body)
+		var payload installPayload
+		_ = json.Unmarshal(body, &payload)
+		if openclawExists() {
+			writeJSON(w, map[string]string{"output": "openclaw already installed"})
+			return
+		}
+		url := installScript
+		if payload.Version == "cn" {
+			url = installScriptCN
+		}
+		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash -s -- --no-onboard")
+		if strings.Contains(out, "installed successfully") && strings.Contains(out, "/dev/tty") {
+			out = out + "\n\nNOTE: OpenClaw 已安装，但最后的交互式 setup 需要 TTY。\n请在终端执行：openclaw setup"
+		}
+		writeJSON(w, map[string]string{"output": out})
 	}))
 
 	mux.HandleFunc("/api/openclaw/update", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
@@ -532,6 +540,21 @@ func main() {
 		}
 		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash -s -- --no-onboard")
 		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/openclaw/version", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		version := strings.TrimSpace(openclawVersion(bin, profile))
+		writeJSON(w, map[string]string{"version": version})
+	}))
+
+	mux.HandleFunc("/api/openclaw/update/check", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		current := strings.TrimSpace(openclawVersion(bin, profile))
+		latest := strings.TrimSpace(runCmd("bash", "-lc", "command -v npm >/dev/null 2>&1 && npm view openclaw version || true"))
+		hasUpdate := false
+		if latest != "" && current != "" && !strings.Contains(current, latest) {
+			hasUpdate = true
+		}
+		writeJSON(w, map[string]interface{}{"current": current, "latest": latest, "hasUpdate": hasUpdate, "installed": current != ""})
 	}))
 
 	mux.HandleFunc("/api/chat/test", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
