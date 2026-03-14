@@ -22,7 +22,8 @@
     <div class="layout">
       <aside class="sidebar">
         <div class="sidebar-title">功能菜单</div>
-        <button class="nav-item active" data-target="config">配置</button>
+        <button class="nav-item active" data-target="dashboard">仪表盘</button>
+        <button class="nav-item" data-target="config">配置</button>
         <button class="nav-item" data-target="system">系统概况</button>
         <button class="nav-item" data-target="logs">日志</button>
         <button class="nav-item" data-target="channels">渠道配置</button>
@@ -41,7 +42,36 @@
       </aside>
 
       <main class="content">
-        <section class="card glow section active" data-section="config">
+                <section class="card glow section active" data-section="dashboard">
+          <h2>仪表盘</h2>
+          <p class="muted">核心状态概览</p>
+          <div class="grid-mini">
+            <div class="mini">
+              <div class="mini-title">OpenClaw</div>
+              <div id="dashOpenclaw" class="mini-value">-</div>
+            </div>
+            <div class="mini">
+              <div class="mini-title">Gateway</div>
+              <div id="dashGateway" class="mini-value">-</div>
+            </div>
+            <div class="mini">
+              <div class="mini-title">CPU/内存</div>
+              <div id="dashMem" class="mini-value">-</div>
+            </div>
+            <div class="mini">
+              <div class="mini-title">磁盘</div>
+              <div id="dashDisk" class="mini-value">-</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="refreshDashboard()">刷新仪表盘</button>
+            <button onclick="checkOpenClawInstall()">检测 OpenClaw</button>
+            <button class="success" onclick="installOpenClawSafe()">一键安装</button>
+          </div>
+          <pre id="dashOutput" class="status"></pre>
+        </section>
+
+<section class="card section" data-section="config">
           <h2>配置</h2>
           <p class="muted">修改模型与 API 后可自动生效</p>
           <div class="row">
@@ -348,7 +378,7 @@
           <h2>安装 OpenClaw</h2>
           <p class="muted">如未安装，可一键安装</p>
           <div class="actions">
-            <button onclick="installOpenClaw()">一键安装</button>
+            <button onclick="installOpenClawSafe()">一键安装</button>
           </div>
           <pre id="installOutput" class="status"></pre>
         </section>
@@ -381,7 +411,41 @@
       btn.addEventListener('click', () => setActiveSection(btn.dataset.target));
     });
 
-    async function detectConfig() {
+        async function refreshDashboard() {
+      const status = await fetch('/api/status').then(r => r.json());
+      const sys = await fetch('/api/system').then(r => r.json());
+      document.getElementById('dashOpenclaw').textContent = (status.openclaw || '').split('
+')[0] || 'unknown';
+      document.getElementById('dashGateway').textContent = (status.gateway || '').split('
+')[0] || 'unknown';
+      const memLine = (sys.mem || '').split('
+')[1] || (sys.mem || '').split('
+')[0] || '';
+      document.getElementById('dashMem').textContent = memLine || 'unknown';
+      const diskLine = (sys.disk || '').split('
+')[1] || (sys.disk || '').split('
+')[0] || '';
+      document.getElementById('dashDisk').textContent = diskLine || 'unknown';
+      document.getElementById('dashOutput').textContent = '已刷新';
+    }
+
+    async function checkOpenClawInstall() {
+      const r = await fetch('/api/openclaw/check');
+      const data = await r.json();
+      document.getElementById('dashOutput').textContent = data.exists ? 'OpenClaw 已安装' : 'OpenClaw 未安装';
+    }
+
+    async function installOpenClawSafe() {
+      const r = await fetch('/api/openclaw/check');
+      const data = await r.json();
+      if (data.exists) {
+        document.getElementById('dashOutput').textContent = 'OpenClaw 已安装，无需重复安装';
+        return;
+      }
+      await installOpenClaw();
+    }
+
+async function detectConfig() {
       const r = await fetch('/api/config/status');
       const data = await r.json();
       document.getElementById('configPath').textContent = JSON.stringify(data, null, 2);

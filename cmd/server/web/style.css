@@ -170,3 +170,27 @@ footer { text-align:center; color: var(--muted); padding: 20px 0 40px; }
   .layout { grid-template-columns: 1fr; }
   .sidebar { position: static; }
 }
+
+.grid-mini {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.mini {
+  background: rgba(6,10,20,0.6);
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.mini-title {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.mini-value {
+  font-weight: 700;
+}

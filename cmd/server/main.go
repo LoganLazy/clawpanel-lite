@@ -424,6 +424,10 @@ func main() {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+		if openclawExists() {
+			writeJSON(w, map[string]string{"output": "openclaw already installed"})
+			return
+		}
 		out := runCmd("bash", "-lc", "curl -fsSL "+installScript+" | bash")
 		writeJSON(w, map[string]string{"output": out})
 	}))
@@ -447,6 +451,12 @@ func main() {
 		out := runCmd(bin, args...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
+	mux.HandleFunc("/api/openclaw/check", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		exists := openclawExists()
+		writeJSON(w, map[string]bool{"exists": exists})
+	}))
+
+
 
 	mux.HandleFunc("/api/cron/add", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -1268,6 +1278,11 @@ func restoreBackup(configPath string, name string) error {
 		return fmt.Errorf("config validate failed: %s", out)
 	}
 	return nil
+}
+
+func openclawExists() bool {
+	_, err := exec.LookPath(gOpenclawBin)
+	return err == nil
 }
 
 func runCmd(name string, args ...string) string {
