@@ -161,9 +161,8 @@ button.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
   padding: 24px;
 }
 
-.init-overlay.hidden { display: none; }
+.init-overlay.hidden { display: none; pointer-events: none; }
 
-.init-card {
   width: min(680px, 96vw);
   background: linear-gradient(180deg, rgba(15,23,42,0.96), rgba(8,12,22,0.96));
   border: 1px solid var(--border);
