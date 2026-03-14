@@ -86,10 +86,6 @@
               <div id="dashOpenclaw" class="value">-</div>
             </div>
             <div class="kv">
-              <div class="label">OpenClaw 版本</div>
-              <div id="dashOpenclawVersion" class="value">-</div>
-            </div>
-            <div class="kv">
               <div class="label">更新状态</div>
               <div id="updatePill" class="pill">未知</div>
             </div>
@@ -108,8 +104,6 @@
           </div>
           <div class="actions">
             <button class="secondary" onclick="refreshDashboard()">刷新仪表盘</button>
-            <button onclick="checkOpenClawInstall()">检测 OpenClaw</button>
-            <button id="installBtn" class="success" onclick="installOpenClawSafe()">一键安装</button>
           </div>
           <div class="actions">
             <button class="secondary" onclick="checkUpdates()">检查更新</button>
@@ -576,24 +570,7 @@ function setActiveSection(name) {
       const diskLine = (sys.disk || '').split('\n')[1] || (sys.disk || '').split('\n')[0] || '';
       document.getElementById('dashDisk').textContent = diskLine || 'unknown';
       document.getElementById('dashOutput').textContent = '已刷新';
-      await loadOpenClawVersion();
       await checkUpdates();
-    }
-
-    async function loadOpenClawVersion() {
-      const el = document.getElementById('dashOpenclawVersion');
-      if (!el) return;
-      try {
-        const r = await fetch('/api/openclaw/version');
-        if (!r.ok) {
-          el.textContent = 'unknown';
-          return;
-        }
-        const data = await r.json();
-        el.textContent = data.version || 'unknown';
-      } catch (e) {
-        el.textContent = 'unknown';
-      }
     }
 
     async function checkUpdates() {
@@ -673,27 +650,10 @@ function setActiveSection(name) {
         });
         const data = await r.json();
         if (outEl) outEl.textContent = data.output || '更新完成';
-        await loadOpenClawVersion();
         await checkUpdates();
       } catch (e) {
         if (outEl) outEl.textContent = '更新失败';
       }
-    }
-
-    async function checkOpenClawInstall() {
-      const r = await fetch('/api/openclaw/check');
-      const data = await r.json();
-      document.getElementById('dashOutput').textContent = data.exists ? 'OpenClaw 已安装' : 'OpenClaw 未安装';
-    }
-
-    async function installOpenClawSafe() {
-      const r = await fetch('/api/openclaw/check');
-      const data = await r.json();
-      if (data.exists) {
-        document.getElementById('dashOutput').textContent = 'OpenClaw 已安装，无需重复安装';
-        return;
-      }
-      await installOpenClaw();
     }
 
 async function detectConfig() {
