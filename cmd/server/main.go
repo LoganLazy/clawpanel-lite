@@ -252,6 +252,11 @@ func main() {
 		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
+	mux.HandleFunc("/api/config/status", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		path, found := detectConfigPath()
+		writeJSON(w, configStatus{ConfigPath: path, Found: found})
+	}))
+
 	mux.HandleFunc("/api/config/get", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		path, found := detectConfigPath()
 		if !found {
