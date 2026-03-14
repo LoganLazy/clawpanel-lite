@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-: "${HOME:=/root}"
+HOME=${HOME:-/root}
 export HOME
 set -u
 

@@ -59,6 +59,10 @@ type statusResp struct {
 	Gateway  string `json:"gateway"`
 }
 
+type installPayload struct {
+	Version string `json:"version"`
+}
+
 type logsResp struct {
 	Output string `json:"output"`
 }
@@ -424,11 +428,18 @@ func main() {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+		body, _ := io.ReadAll(r.Body)
+		var payload installPayload
+		_ = json.Unmarshal(body, &payload)
 		if openclawExists() {
 			writeJSON(w, map[string]string{"output": "openclaw already installed"})
 			return
 		}
-		out := runCmd("bash", "-lc", "curl -fsSL "+installScript+" | bash")
+		url := installScript
+		if payload.Version == "cn" {
+			url = "https://openclaw.ai/install-zh.sh"
+		}
+		out := runCmd("bash", "-lc", "curl -fsSL "+url+" | bash")
 		writeJSON(w, map[string]string{"output": out})
 	}))
 

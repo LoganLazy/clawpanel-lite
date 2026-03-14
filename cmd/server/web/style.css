@@ -194,3 +194,11 @@ footer { text-align:center; color: var(--muted); padding: 20px 0 40px; }
 .mini-value {
   font-weight: 700;
 }
+
+.actions select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(5,10,20,0.8);
+  color: var(--text);
+}

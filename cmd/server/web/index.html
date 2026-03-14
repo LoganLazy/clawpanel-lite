@@ -378,6 +378,10 @@
           <h2>安装 OpenClaw</h2>
           <p class="muted">如未安装，可一键安装</p>
           <div class="actions">
+            <select id="installVersion2">
+              <option value="normal">普通版</option>
+              <option value="cn">CN 版</option>
+            </select>
             <button onclick="installOpenClawSafe()">一键安装</button>
           </div>
           <pre id="installOutput" class="status"></pre>
@@ -655,9 +659,12 @@ async function detectConfig() {
     }
 
     async function installOpenClaw() {
-      const r = await fetch('/api/install', { method: 'POST' });
+      const version = (document.getElementById('installVersion') || document.getElementById('installVersion2'))?.value || 'normal';
+      document.getElementById('dashOutput').textContent = '安装中...';
+      const r = await fetch('/api/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version }) });
       const data = await r.json();
       document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
+      document.getElementById('dashOutput').textContent = data.output || '安装完成';
     }
 
     async function addCron() {
