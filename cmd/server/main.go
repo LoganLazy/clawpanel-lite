@@ -49,6 +49,12 @@ type configPayload struct {
 	BaseURL string `json:"baseUrl"`
 }
 
+type chatTestResp struct {
+	Output string `json:"output"`
+	LatencyMs int64 `json:"latencyMs"`
+	Ok bool `json:"ok"`
+}
+
 type chatPayload struct {
 	Message string `json:"message"`
 	Model   string `json:"model"`
@@ -471,6 +477,32 @@ func main() {
 		exists := openclawExists()
 		writeJSON(w, map[string]bool{"exists": exists})
 	}))
+	mux.HandleFunc("/api/chat/test", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload chatPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		msg := strings.TrimSpace(payload.Message)
+		if msg == "" {
+			msg = "你好"
+		}
+		start := time.Now()
+		args := withProfile(profile, "agent", "--message", msg, "--json")
+		if strings.TrimSpace(payload.Model) != "" {
+			args = append(args, "--model", payload.Model)
+		}
+		out := runCmd(bin, args...)
+		latency := time.Since(start).Milliseconds()
+		ok := !strings.Contains(out, "(err:")
+		writeJSON(w, chatTestResp{Output: out, LatencyMs: latency, Ok: ok})
+	}))
+
 
 
 

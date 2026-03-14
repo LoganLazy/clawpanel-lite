@@ -341,6 +341,11 @@
           </div>
           <div class="actions">
             <button class="success" onclick="sendChat()">发送</button>
+            <button class="secondary" onclick="testChat()">测试 API</button>
+          </div>
+          <div class="row">
+            <label>延迟（ms）</label>
+            <input id="chatLatency" readonly />
           </div>
           <pre id="chatOutput" class="status"></pre>
         </section>
@@ -639,7 +644,24 @@ async function detectConfig() {
       document.getElementById('chatOutput').textContent = JSON.stringify(data, null, 2);
     }
 
-    async function installOpenClaw() {
+        async function testChat() {
+      const payload = {
+        message: document.getElementById('chatMsg').value || '你好',
+        model: document.getElementById('chatModel').value,
+      };
+      const start = Date.now();
+      const r = await fetch('/api/chat/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await r.json();
+      const latency = data.latencyMs || (Date.now() - start);
+      document.getElementById('chatLatency').value = latency;
+      document.getElementById('chatOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+async function installOpenClaw() {
       if (installBusy) {
         document.getElementById('dashOutput').textContent = '正在安装中，请稍候...';
         return;
