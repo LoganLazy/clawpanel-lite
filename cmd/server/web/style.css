@@ -169,7 +169,25 @@ footer { text-align:center; color: var(--muted); padding: 20px 0 40px; }
 
 @media (max-width: 980px) {
   .layout { grid-template-columns: 1fr; }
-  .sidebar { position: static; }
+  .sidebar {
+    position: static;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 10px;
+  }
+  .sidebar-title { display: none; }
+  .nav-item {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  .content { padding-bottom: 24px; }
+  .card { padding: 16px; }
+  .row { gap: 6px; }
 }
 
 .grid-mini {
