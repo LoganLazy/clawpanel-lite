@@ -123,6 +123,16 @@ type skillManagePayload struct {
 	Target string `json:"target"` // managed|workspace
 }
 
+type commonSkill struct {
+	Name   string `json:"name"`
+	GitURL string `json:"gitUrl"`
+	Target string `json:"target"`
+}
+
+type commonInstallPayload struct {
+	Name string `json:"name"`
+}
+
 type skillEntry struct {
 	Name   string `json:"name"`
 	Path   string `json:"path"`
@@ -588,6 +598,52 @@ func main() {
 		items := listBackups()
 		writeJSON(w, items)
 	}))
+	mux.HandleFunc("/api/skills/common/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		items := loadCommonSkills()
+		writeJSON(w, items)
+	}))
+
+	mux.HandleFunc("/api/skills/common/save", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		items := []commonSkill{}
+		if err := json.Unmarshal(body, &items); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		if err := saveCommonSkills(items); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
+	mux.HandleFunc("/api/skills/common/install", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload commonInstallPayload
+		if err := json.Unmarshal(body, &payload); err != nil || payload.Name == "" {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		skill, ok := findCommonSkill(payload.Name)
+		if !ok {
+			http.Error(w, "skill not found", http.StatusNotFound)
+			return
+		}
+		if err := installSkill(skillManagePayload{Name: skill.Name, GitURL: skill.GitURL, Target: skill.Target}); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
+	}))
+
 
 	mux.HandleFunc("/api/backups/create", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -966,6 +1022,50 @@ func skillsDirManaged() string {
 func skillsDirWorkspace() string {
 	ws := envOr("CLAWPANEL_WORKSPACE", "~/.openclaw/workspace")
 	return filepath.Join(expand(ws), "skills")
+}
+
+func dataDir() string {
+	if v := os.Getenv("CLAWPANEL_DATA_DIR"); v != "" {
+		return expand(v)
+	}
+	return "/opt/clawpanel-lite/data"
+}
+
+func commonSkillsPath() string {
+	return filepath.Join(dataDir(), "common-skills.json")
+}
+
+func loadCommonSkills() []commonSkill {
+	path := commonSkillsPath()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return []commonSkill{}
+	}
+	items := []commonSkill{}
+	if err := json.Unmarshal(data, &items); err != nil {
+		return []commonSkill{}
+	}
+	return items
+}
+
+func saveCommonSkills(items []commonSkill) error {
+	if err := os.MkdirAll(dataDir(), 0755); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(items, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(commonSkillsPath(), data, 0644)
+}
+
+func findCommonSkill(name string) (commonSkill, bool) {
+	for _, s := range loadCommonSkills() {
+		if s.Name == name {
+			return s, true
+		}
+	}
+	return commonSkill{}, false
 }
 
 func listLocalSkills(base string, target string) []skillEntry {

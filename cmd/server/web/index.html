@@ -234,6 +234,24 @@
       </section>
 
       <section class="card">
+        <h2>常用技能（一键安装）</h2>
+        <p class="muted">可在面板内编辑常用技能列表</p>
+        <div class="actions">
+          <button class="secondary" onclick="loadCommonSkills()">加载列表</button>
+          <button onclick="saveCommonSkills()">保存列表</button>
+        </div>
+        <textarea id="commonSkills" rows="6" placeholder='[{"name":"skill-a","gitUrl":"https://...","target":"managed"}]'></textarea>
+        <div class="row">
+          <label>安装某个常用技能（按 name）</label>
+          <input id="commonSkillName" placeholder="skill-a" />
+        </div>
+        <div class="actions">
+          <button onclick="installCommonSkill()">一键安装</button>
+        </div>
+        <pre id="commonSkillsOutput" class="status"></pre>
+      </section>
+
+      <section class="card">
         <h2>浏览器</h2>
         <p class="muted">浏览器状态与插件</p>
         <div class="actions">
@@ -642,6 +660,41 @@
       });
       const out = await r.text();
       document.getElementById('skillsOutput').textContent = out;
+    }
+
+    async function loadCommonSkills() {
+      const r = await fetch('/api/skills/common/list');
+      const data = await r.json();
+      document.getElementById('commonSkills').value = JSON.stringify(data, null, 2);
+      document.getElementById('commonSkillsOutput').textContent = '已加载';
+    }
+
+    async function saveCommonSkills() {
+      let payload = [];
+      try {
+        payload = JSON.parse(document.getElementById('commonSkills').value || '[]');
+      } catch (e) {
+        document.getElementById('commonSkillsOutput').textContent = 'JSON 格式错误';
+        return;
+      }
+      const r = await fetch('/api/skills/common/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('commonSkillsOutput').textContent = out;
+    }
+
+    async function installCommonSkill() {
+      const payload = { name: document.getElementById('commonSkillName').value };
+      const r = await fetch('/api/skills/common/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await r.text();
+      document.getElementById('commonSkillsOutput').textContent = out;
     }
 
     async function installExtension() {
