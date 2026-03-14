@@ -59,6 +59,7 @@
         <div class="sidebar-title">功能菜单</div>
         <button class="nav-item active" data-target="dashboard">仪表盘</button>
         <button class="nav-item" data-target="config">配置</button>
+        <button class="nav-item" data-target="account">账号安全</button>
         <button class="nav-item" data-target="system">系统概况</button>
         <button class="nav-item" data-target="logs">日志</button>
         <button class="nav-item" data-target="channels">渠道配置</button>
@@ -144,7 +145,27 @@
           <pre id="configStatus" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="system">
+        <section class="card section" data-section="account">
+          <div class="section-title"><h2>账号安全</h2><span class="muted">修改面板密码</span></div>
+          <p class="muted">用户名固定为 admin，仅支持修改密码</p>
+          <div class="row">
+            <label>当前密码</label>
+            <input id="pwdOld" type="password" placeholder="当前密码" />
+          </div>
+          <div class="row">
+            <label>新密码</label>
+            <input id="pwdNew" type="password" placeholder="新密码" />
+          </div>
+          <div class="row">
+            <label>确认新密码</label>
+            <input id="pwdNew2" type="password" placeholder="确认新密码" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="changePassword()">修改密码</button>
+          </div>
+          <pre id="pwdOutput" class="status"></pre>
+        </section>
+
           <div class="section-title"><h2>系统概况</h2><span class="muted">系统状态</span></div>
           <p class="muted">系统状态 / 资源概览</p>
           <div class="actions">
@@ -602,6 +623,38 @@ function setActiveSection(name) {
       } catch (e) {
         pill.textContent = '检查失败';
         pill.classList.add('fail');
+      }
+    }
+
+    async function changePassword() {
+      const oldPass = document.getElementById('pwdOld').value;
+      const newPass = document.getElementById('pwdNew').value;
+      const newPass2 = document.getElementById('pwdNew2').value;
+      const outEl = document.getElementById('pwdOutput');
+      if (!oldPass || !newPass) {
+        outEl.textContent = '请输入当前密码和新密码';
+        return;
+      }
+      if (newPass !== newPass2) {
+        outEl.textContent = '两次新密码不一致';
+        return;
+      }
+      outEl.textContent = '保存中...';
+      try {
+        const r = await fetch('/api/account/password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldPass, newPass })
+        });
+        if (!r.ok) {
+          const err = await r.text();
+          outEl.textContent = err || '修改失败';
+          return;
+        }
+        outEl.textContent = '修改成功，请重新登录';
+        setTimeout(() => { window.location.href = '/logout'; }, 800);
+      } catch (e) {
+        outEl.textContent = '修改失败';
       }
     }
 

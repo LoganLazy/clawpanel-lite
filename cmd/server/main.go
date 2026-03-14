@@ -223,9 +223,33 @@ func main() {
 		http.Redirect(w, r, "/login", http.StatusFound)
 	})
 
-	mux.HandleFunc("/api/config/status", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
-		path, found := detectConfigPath()
-		writeJSON(w, configStatus{ConfigPath: path, Found: found})
+	mux.HandleFunc("/api/account/password", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload struct {
+			OldPass string `json:"oldPass"`
+			NewPass string `json:"newPass"`
+		}
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		if strings.TrimSpace(payload.NewPass) == "" {
+			http.Error(w, "new password is empty", http.StatusBadRequest)
+			return
+		}
+		if subtle.ConstantTimeCompare([]byte(payload.OldPass), []byte(pass)) != 1 {
+			http.Error(w, "current password incorrect", http.StatusUnauthorized)
+			return
+		}
+		if err := updateServicePassword(payload.NewPass); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
 	mux.HandleFunc("/api/config/get", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
@@ -1128,6 +1152,38 @@ func dataDir() string {
 		return expand(v)
 	}
 	return "/opt/clawpanel-lite/data"
+}
+
+func updateServicePassword(newPass string) error {
+	unit := "clawpanel-lite.service"
+	cmd := "systemctl show -p FragmentPath " + unit + " | cut -d= -f2"
+	path := strings.TrimSpace(runCmd("bash", "-lc", cmd))
+	if path == "" || strings.Contains(path, "(err:") {
+		return errors.New("failed to locate systemd unit")
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read unit failed: %w", err)
+	}
+	text := string(content)
+	lines := strings.Split(text, "\n")
+	found := false
+	for i, line := range lines {
+		if strings.HasPrefix(line, "Environment=CLAWPANEL_PASS=") {
+			lines[i] = "Environment=CLAWPANEL_PASS=" + newPass
+			found = true
+			break
+		}
+	}
+	if !found {
+		return errors.New("CLAWPANEL_PASS not found in unit file")
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+		return fmt.Errorf("write unit failed: %w", err)
+	}
+	_ = runCmd("systemctl", "daemon-reload")
+	_ = runCmd("systemctl", "restart", "clawpanel-lite")
+	return nil
 }
 
 func commonSkillsPath() string {
