@@ -85,6 +85,14 @@
               <div id="dashOpenclaw" class="value">-</div>
             </div>
             <div class="kv">
+              <div class="label">OpenClaw 版本</div>
+              <div id="dashOpenclawVersion" class="value">-</div>
+            </div>
+            <div class="kv">
+              <div class="label">更新状态</div>
+              <div id="updatePill" class="pill">未知</div>
+            </div>
+            <div class="kv">
               <div class="label">Gateway</div>
               <div id="dashGateway" class="value">-</div>
             </div>
@@ -101,6 +109,11 @@
             <button class="secondary" onclick="refreshDashboard()">刷新仪表盘</button>
             <button onclick="checkOpenClawInstall()">检测 OpenClaw</button>
             <button id="installBtn" class="success" onclick="installOpenClawSafe()">一键安装</button>
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="checkUpdates()">检查更新</button>
+            <button class="success" onclick="updateOpenClaw('normal')">更新 OpenClaw（官方）</button>
+            <button class="secondary" onclick="updateOpenClaw('cn')">更新 OpenClaw（CN）</button>
           </div>
           <pre id="dashOutput" class="status"></pre>
         </section>
@@ -524,6 +537,7 @@ function setActiveSection(name) {
     });
 
     checkInitFlow();
+    refreshDashboard();
 
     async function refreshDashboard() {
       const status = await fetch('/api/status').then(r => r.json());
@@ -535,6 +549,66 @@ function setActiveSection(name) {
       const diskLine = (sys.disk || '').split('\n')[1] || (sys.disk || '').split('\n')[0] || '';
       document.getElementById('dashDisk').textContent = diskLine || 'unknown';
       document.getElementById('dashOutput').textContent = '已刷新';
+      await loadOpenClawVersion();
+      await checkUpdates();
+    }
+
+    async function loadOpenClawVersion() {
+      const el = document.getElementById('dashOpenclawVersion');
+      if (!el) return;
+      try {
+        const r = await fetch('/api/openclaw/version');
+        if (!r.ok) {
+          el.textContent = 'unknown';
+          return;
+        }
+        const data = await r.json();
+        el.textContent = data.version || 'unknown';
+      } catch (e) {
+        el.textContent = 'unknown';
+      }
+    }
+
+    async function checkUpdates() {
+      const pill = document.getElementById('updatePill');
+      if (!pill) return;
+      pill.textContent = '检查中...';
+      pill.classList.remove('ok', 'warn', 'fail');
+      try {
+        const r = await fetch('/api/openclaw/update/check');
+        if (!r.ok) {
+          pill.textContent = '检查失败';
+          pill.classList.add('fail');
+          return;
+        }
+        const data = await r.json();
+        if (data.hasUpdate) {
+          pill.textContent = `有新版本：${data.latest} → 点击更新`;
+          pill.classList.add('warn');
+        } else {
+          pill.textContent = '已是最新';
+          pill.classList.add('ok');
+        }
+      } catch (e) {
+        pill.textContent = '检查失败';
+        pill.classList.add('fail');
+      }
+    }
+
+    async function updateOpenClaw(version) {
+      const outEl = document.getElementById('dashOutput');
+      if (outEl) outEl.textContent = '更新中...';
+      try {
+        const r = await fetch('/api/openclaw/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ version })
+        });
+        const data = await r.json();
+        if (outEl) outEl.textContent = data.output || '更新完成';
+      } catch (e) {
+        if (outEl) outEl.textContent = '更新失败';
+      }
     }
 
     async function checkOpenClawInstall() {

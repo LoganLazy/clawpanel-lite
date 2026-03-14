@@ -470,29 +470,40 @@ func main() {
 		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
-	mux.HandleFunc("/api/chat", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/openclaw/version", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "--version")...)
+		writeJSON(w, map[string]string{"version": strings.TrimSpace(out)})
+	}))
+
+	mux.HandleFunc("/api/openclaw/update/check", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		current := strings.TrimSpace(runCmd(bin, withProfile(profile, "--version")...))
+		latest := strings.TrimSpace(runCmd("bash", "-lc", "npm view openclaw version"))
+		if strings.Contains(current, "(") {
+			// keep current as-is
+		}
+		hasUpdate := false
+		if latest != "" && current != "" && !strings.Contains(current, latest) {
+			hasUpdate = true
+		}
+		writeJSON(w, map[string]interface{}{"current": current, "latest": latest, "hasUpdate": hasUpdate})
+	}))
+
+	mux.HandleFunc("/api/openclaw/update", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 		body, _ := io.ReadAll(r.Body)
-		var payload chatPayload
-		if err := json.Unmarshal(body, &payload); err != nil || strings.TrimSpace(payload.Message) == "" {
-			http.Error(w, "invalid payload", http.StatusBadRequest)
-			return
+		var payload installPayload
+		_ = json.Unmarshal(body, &payload)
+		url := installScript
+		if payload.Version == "cn" {
+			url = installScriptCN
 		}
-
-		args := withProfile(profile, "agent", "--message", payload.Message, "--json")
-		if strings.TrimSpace(payload.Model) != "" {
-			args = append(args, "--model", payload.Model)
-		}
-		out := runCmd(bin, args...)
+		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash -s -- --no-onboard")
 		writeJSON(w, map[string]string{"output": out})
 	}))
-	mux.HandleFunc("/api/openclaw/check", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
-		exists := openclawExists()
-		writeJSON(w, map[string]bool{"exists": exists})
-	}))
+
 	mux.HandleFunc("/api/chat/test", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
