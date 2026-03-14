@@ -50,7 +50,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 240px 1fr;
   gap: 20px;
 }
 
@@ -98,7 +98,7 @@ body {
   background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(8,12,22,0.92));
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 18px;
+  padding: 20px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   position: relative;
 }
@@ -144,7 +144,7 @@ button.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
 .status {
   background: rgba(6,10,20,0.8); border:1px dashed var(--border);
-  padding:10px; border-radius:10px; min-height:80px; white-space: pre-wrap;
+  padding:10px; border-radius:10px; min-height:80px; white-space: pre-wrap; line-height: 1.5;
 }
 
 .sep { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
@@ -228,4 +228,37 @@ button:disabled {
 .pill.fail {
   color: #f87171;
   border-color: rgba(248,113,113,0.4);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.section-title h2 { margin: 0; }
+
+.kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.kv {
+  background: rgba(5,10,20,0.7);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.kv .label { color: var(--muted); font-size: 12px; }
+.kv .value { font-weight: 600; }
+
+.sidebar .nav-item {
+  transition: all .15s ease;
+}
+
+.sidebar .nav-item:hover {
+  background: rgba(99,102,241,0.12);
 }

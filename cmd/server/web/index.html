@@ -42,24 +42,24 @@
 
       <main class="content">
                 <section class="card glow section active" data-section="dashboard">
-          <h2>仪表盘</h2>
+          <div class="section-title"><h2>仪表盘</h2><span class="muted">概览</span></div>
           <p class="muted">核心状态概览</p>
-          <div class="grid-mini">
-            <div class="mini">
-              <div class="mini-title">OpenClaw</div>
-              <div id="dashOpenclaw" class="mini-value">-</div>
+          <div class="kv-grid">
+            <div class="kv">
+              <div class="label">OpenClaw</div>
+              <div id="dashOpenclaw" class="value">-</div>
             </div>
-            <div class="mini">
-              <div class="mini-title">Gateway</div>
-              <div id="dashGateway" class="mini-value">-</div>
+            <div class="kv">
+              <div class="label">Gateway</div>
+              <div id="dashGateway" class="value">-</div>
             </div>
-            <div class="mini">
-              <div class="mini-title">CPU/内存</div>
-              <div id="dashMem" class="mini-value">-</div>
+            <div class="kv">
+              <div class="label">CPU/内存</div>
+              <div id="dashMem" class="value">-</div>
             </div>
-            <div class="mini">
-              <div class="mini-title">磁盘</div>
-              <div id="dashDisk" class="mini-value">-</div>
+            <div class="kv">
+              <div class="label">磁盘</div>
+              <div id="dashDisk" class="value">-</div>
             </div>
           </div>
           <div class="actions">
@@ -71,7 +71,7 @@
         </section>
 
 <section class="card section" data-section="config">
-          <h2>配置</h2>
+          <div class="section-title"><h2>配置</h2><span class="muted">模型与 API</span></div>
           <p class="muted">修改模型与 API 后可自动生效</p>
           <div class="row">
             <label>Model</label>
@@ -97,7 +97,7 @@
         </section>
 
         <section class="card section" data-section="system">
-          <h2>系统概况</h2>
+          <div class="section-title"><h2>系统概况</h2><span class="muted">系统状态</span></div>
           <p class="muted">系统状态 / 资源概览</p>
           <div class="actions">
             <button class="secondary" onclick="loadSystem()">刷新系统</button>
@@ -106,7 +106,7 @@
         </section>
 
         <section class="card section" data-section="logs">
-          <h2>日志搜索/下载</h2>
+          <div class="section-title"><h2>日志</h2><span class="muted">搜索 / 下载</span></div>
           <p class="muted">关键字过滤 + 下载</p>
           <div class="row">
             <label>关键词</label>
@@ -129,7 +129,7 @@
         </section>
 
         <section class="card section" data-section="channels">
-          <h2>渠道配置</h2>
+          <div class="section-title"><h2>渠道配置</h2><span class="muted">Telegram / QQ / Discord</span></div>
           <p class="muted">Telegram / QQ / Discord 简易配置</p>
           <div class="row">
             <label>Telegram Bot Token</label>
@@ -177,7 +177,7 @@
         </section>
 
         <section class="card section" data-section="channels-raw">
-          <h2>渠道原始配置</h2>
+          <div class="section-title"><h2>渠道原始配置</h2><span class="muted">高级 JSON</span></div>
           <p class="muted">高级渠道配置（JSON）</p>
           <textarea id="channelsRaw" rows="6" placeholder='{"discord":{...}}'></textarea>
           <div class="actions">
@@ -188,7 +188,7 @@
         </section>
 
         <section class="card section" data-section="backup">
-          <h2>配置备份 / 恢复</h2>
+          <div class="section-title"><h2>备份 / 恢复</h2><span class="muted">配置保护</span></div>
           <p class="muted">保护配置，快速回滚</p>
           <div class="row">
             <label>备份名称</label>
@@ -216,7 +216,7 @@
         </section>
 
         <section class="card section" data-section="pairing">
-          <h2>配对 (Pairing)</h2>
+          <div class="section-title"><h2>配对</h2><span class="muted">批准连接</span></div>
           <p class="muted">查看/批准配对码</p>
           <div class="row">
             <label>频道</label>
@@ -238,7 +238,7 @@
         </section>
 
         <section class="card section" data-section="status">
-          <h2>状态</h2>
+          <div class="section-title"><h2>状态</h2><span class="muted">服务健康</span></div>
           <p class="muted">查看 OpenClaw / Gateway 状态</p>
           <div class="row" id="statusPills">
             <div class="pill" id="openclawPill">OpenClaw: 未知</div>
@@ -252,7 +252,7 @@
         </section>
 
         <section class="card section" data-section="cron-manage">
-          <h2>Cron 管理</h2>
+          <div class="section-title"><h2>Cron 管理</h2><span class="muted">任务列表</span></div>
           <p class="muted">列表 / 删除 / 运行历史</p>
           <div class="actions">
             <button class="secondary" onclick="listCron()">列出任务</button>
@@ -269,7 +269,7 @@
         </section>
 
         <section class="card section" data-section="skills">
-          <h2>技能</h2>
+          <div class="section-title"><h2>技能</h2><span class="muted">管理</span></div>
           <p class="muted">列出/检测技能 + 本地安装管理</p>
           <div class="row">
             <label>技能名（info 可选）</label>
@@ -303,7 +303,7 @@
         </section>
 
         <section class="card section" data-section="skills-common">
-          <h2>常用技能（一键安装）</h2>
+          <div class="section-title"><h2>常用技能</h2><span class="muted">一键安装</span></div>
           <p class="muted">可在面板内编辑常用技能列表</p>
           <div class="actions">
             <button class="secondary" onclick="loadCommonSkills()">加载列表</button>
@@ -322,7 +322,7 @@
         </section>
 
         <section class="card section" data-section="browser">
-          <h2>浏览器</h2>
+          <div class="section-title"><h2>浏览器</h2><span class="muted">状态 / 插件</span></div>
           <p class="muted">浏览器状态与插件</p>
           <div class="actions">
             <button class="secondary" onclick="browserStatus()">状态</button>
@@ -351,7 +351,7 @@
         </section>
 
         <section class="card section" data-section="chat">
-          <h2>聊天测试</h2>
+          <div class="section-title"><h2>聊天测试</h2><span class="muted">API 诊断</span></div>
           <p class="muted">发送一条测试消息（默认模型）</p>
           <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
           <div class="row">
@@ -378,7 +378,7 @@
         </section>
 
         <section class="card section" data-section="cron-create">
-          <h2>定时任务 (Cron)</h2>
+          <div class="section-title"><h2>Cron 创建</h2><span class="muted">快速任务</span></div>
           <p class="muted">快速创建运维任务</p>
           <div class="row">
             <label>任务名称</label>
