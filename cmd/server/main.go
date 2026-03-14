@@ -985,13 +985,14 @@ func updateConfigFile(path string, payload configPayload) error {
 		return fmt.Errorf("write config failed: %w", err)
 	}
 
-	if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
-		return fmt.Errorf("config validate failed: %s", out)
+	if openclawExists() {
+		if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
+			return fmt.Errorf("config validate failed: %s", out)
+		}
 	}
 
 	return nil
 }
-func ensureConfigFile(pathRaw string) error {
 	path := expand(pathRaw)
 	if fileExists(path) {
 		return nil
@@ -1056,8 +1057,10 @@ func updateChannels(path string, payload channelPayload) error {
 		return fmt.Errorf("write config failed: %w", err)
 	}
 
-	if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
-		return fmt.Errorf("config validate failed: %s", out)
+	if openclawExists() {
+		if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
+			return fmt.Errorf("config validate failed: %s", out)
+		}
 	}
 
 	return nil
@@ -1091,8 +1094,10 @@ func updateChannelsRaw(path string, raw string) error {
 		return fmt.Errorf("write config failed: %w", err)
 	}
 
-	if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
-		return fmt.Errorf("config validate failed: %s", out)
+	if openclawExists() {
+		if out := runCmd(gOpenclawBin, withProfile(gProfile, "config", "validate")...); strings.Contains(strings.ToLower(out), "error") {
+			return fmt.Errorf("config validate failed: %s", out)
+		}
 	}
 
 	return nil
