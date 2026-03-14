@@ -14,9 +14,11 @@ PROFILE=""
 OPENCLAW_INSTALL=0
 
 if [ "${1:-}" = "--help" ]; then
-  echo "Usage: install.sh [--dir /path] [--port 1450] [--user admin] [--pass claw520] [--profile dev] [--install-openclaw]"
+  echo "Usage: install.sh [--dir /path] [--port 1450] [--user admin] [--pass claw520] [--profile dev] [--install-openclaw] [--install-openclaw-cn]"
   exit 0
 fi
+
+OPENCLAW_CN=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -26,9 +28,10 @@ while [ $# -gt 0 ]; do
     --pass) PASS="$2"; shift 2;;
     --profile) PROFILE="$2"; shift 2;;
     --install-openclaw) OPENCLAW_INSTALL=1; shift 1;;
+    --install-openclaw-cn) OPENCLAW_INSTALL=1; OPENCLAW_CN=1; shift 1;;
     *) shift;;
   esac
-done
+ done
 
 if ! command -v git >/dev/null 2>&1; then
   if command -v apt >/dev/null 2>&1; then
@@ -51,7 +54,11 @@ if ! command -v go >/dev/null 2>&1; then
 fi
 
 if [ "$OPENCLAW_INSTALL" = "1" ] && ! command -v openclaw >/dev/null 2>&1; then
-  curl -fsSL https://openclaw.ai/install.sh | bash
+  if [ "$OPENCLAW_CN" = "1" ]; then
+    curl -fsSL https://openclaw.ai/install-cn.sh | bash -s -- --no-onboard
+  else
+    curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
+  fi
 fi
 
 mkdir -p "$INSTALL_DIR"
