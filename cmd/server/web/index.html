@@ -65,7 +65,7 @@
           <div class="actions">
             <button class="secondary" onclick="refreshDashboard()">刷新仪表盘</button>
             <button onclick="checkOpenClawInstall()">检测 OpenClaw</button>
-            <button class="success" onclick="installOpenClawSafe()">一键安装</button>
+            <button id="installBtn" class="success" onclick="installOpenClawSafe()">一键安装</button>
           </div>
           <pre id="dashOutput" class="status"></pre>
         </section>
@@ -381,7 +381,9 @@
   <footer class="muted">ClawPanel Lite · Minimal Web UI</footer>
 
   <script>
-    function setActiveSection(name) {
+        let installBusy = false;
+
+function setActiveSection(name) {
       document.querySelectorAll('.section').forEach((el) => {
         el.classList.toggle('active', el.dataset.section === name);
       });
@@ -638,13 +640,27 @@ async function detectConfig() {
     }
 
     async function installOpenClaw() {
+      if (installBusy) {
+        document.getElementById('dashOutput').textContent = '正在安装中，请稍候...';
+        return;
+      }
+      installBusy = true;
+      const btn = document.getElementById('installBtn');
+      if (btn) btn.disabled = true;
       const version = (document.getElementById('installVersion'))?.value || 'normal';
       document.getElementById('dashOutput').textContent = '安装中...';
       document.getElementById('installOutput').textContent = '安装中...';
-      const r = await fetch('/api/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version }) });
-      const data = await r.json();
-      document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
-      document.getElementById('dashOutput').textContent = data.output || '安装完成';
+      try {
+        const r = await fetch('/api/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version }) });
+        const data = await r.json();
+        document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
+        document.getElementById('dashOutput').textContent = data.output || '安装完成';
+      } catch (e) {
+        document.getElementById('dashOutput').textContent = '安装失败，请重试';
+      } finally {
+        installBusy = false;
+        if (btn) btn.disabled = false;
+      }
     }
 
     async function addCron() {
