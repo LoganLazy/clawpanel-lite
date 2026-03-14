@@ -347,6 +347,14 @@
             <label>延迟（ms）</label>
             <input id="chatLatency" readonly />
           </div>
+          <div class="row">
+            <label>平均延迟（最近 5 次）</label>
+            <input id="chatLatencyAvg" readonly />
+          </div>
+          <div class="row">
+            <label>API 状态</label>
+            <div id="chatStatus" class="pill">未知</div>
+          </div>
           <pre id="chatOutput" class="status"></pre>
         </section>
 
@@ -386,7 +394,8 @@
   <footer class="muted">ClawPanel Lite · Minimal Web UI</footer>
 
   <script>
-        let installBusy = false;
+            let latencyBuffer = [];
+let installBusy = false;
 
 function setActiveSection(name) {
       document.querySelectorAll('.section').forEach((el) => {
@@ -658,6 +667,19 @@ async function detectConfig() {
       const data = await r.json();
       const latency = data.latencyMs || (Date.now() - start);
       document.getElementById('chatLatency').value = latency;
+      latencyBuffer = [latency, ...latencyBuffer].slice(0, 5);
+      const avg = Math.round(latencyBuffer.reduce((a, b) => a + b, 0) / latencyBuffer.length);
+      document.getElementById('chatLatencyAvg').value = avg;
+      const statusEl = document.getElementById('chatStatus');
+      if (data.ok) {
+        statusEl.textContent = '正常';
+        statusEl.classList.remove('fail');
+        statusEl.classList.add('ok');
+      } else {
+        statusEl.textContent = '异常';
+        statusEl.classList.remove('ok');
+        statusEl.classList.add('fail');
+      }
       document.getElementById('chatOutput').textContent = JSON.stringify(data, null, 2);
     }
 

@@ -208,3 +208,24 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(5,10,20,0.8);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pill.ok {
+  color: #34d399;
+  border-color: rgba(52,211,153,0.4);
+}
+
+.pill.fail {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.4);
+}
