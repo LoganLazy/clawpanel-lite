@@ -1335,6 +1335,18 @@ func openclawExists() bool {
 
 func runCmd(name string, args ...string) string {
 	cmd := exec.Command(name, args...)
+	env := os.Environ()
+	hasHome := false
+	for _, kv := range env {
+		if strings.HasPrefix(kv, "HOME=") {
+			hasHome = true
+			break
+		}
+	}
+	if !hasHome {
+		env = append(env, "HOME=/root")
+	}
+	cmd.Env = env
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Sprintf("%s\n(err: %v)", string(out), err)
