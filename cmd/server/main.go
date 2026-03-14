@@ -471,21 +471,18 @@ func main() {
 	}))
 
 	mux.HandleFunc("/api/openclaw/version", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
-		out := runCmd(bin, withProfile(profile, "--version")...)
-		writeJSON(w, map[string]string{"version": strings.TrimSpace(out)})
+		version := strings.TrimSpace(openclawVersion(bin, profile))
+		writeJSON(w, map[string]string{"version": version})
 	}))
 
 	mux.HandleFunc("/api/openclaw/update/check", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
-		current := strings.TrimSpace(runCmd(bin, withProfile(profile, "--version")...))
-		latest := strings.TrimSpace(runCmd("bash", "-lc", "npm view openclaw version"))
-		if strings.Contains(current, "(") {
-			// keep current as-is
-		}
+		current := strings.TrimSpace(openclawVersion(bin, profile))
+		latest := strings.TrimSpace(runCmd("bash", "-lc", "command -v npm >/dev/null 2>&1 && npm view openclaw version || true"))
 		hasUpdate := false
 		if latest != "" && current != "" && !strings.Contains(current, latest) {
 			hasUpdate = true
 		}
-		writeJSON(w, map[string]interface{}{"current": current, "latest": latest, "hasUpdate": hasUpdate})
+		writeJSON(w, map[string]interface{}{"current": current, "latest": latest, "hasUpdate": hasUpdate, "installed": current != ""})
 	}))
 
 	mux.HandleFunc("/api/openclaw/update", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
@@ -1374,6 +1371,18 @@ func restoreBackup(configPath string, name string) error {
 func openclawExists() bool {
 	_, err := exec.LookPath(gOpenclawBin)
 	return err == nil
+}
+
+func openclawVersion(bin string, profile string) string {
+	if !openclawExists() {
+		return ""
+	}
+	out := runCmd(bin, withProfile(profile, "--version")...)
+	out = strings.TrimSpace(out)
+	if out == "" || strings.Contains(strings.ToLower(out), "not found") {
+		return ""
+	}
+	return out
 }
 
 func runCmd(name string, args ...string) string {

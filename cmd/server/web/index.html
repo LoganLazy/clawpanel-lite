@@ -582,6 +582,11 @@ function setActiveSection(name) {
           return;
         }
         const data = await r.json();
+        if (!data.installed) {
+          pill.textContent = '未安装';
+          pill.classList.add('fail');
+          return;
+        }
         if (data.hasUpdate) {
           pill.textContent = `有新版本：${data.latest} → 点击更新`;
           pill.classList.add('warn');
