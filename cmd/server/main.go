@@ -354,6 +354,10 @@ func main() {
 
 	mux.HandleFunc("/api/templates", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		templates := []apiTemplate{
+			{Name: "OpenAI GPT-4o", BaseURL: "https://api.openai.com/v1", Model: "gpt-4o-mini"},
+			{Name: "OpenAI GPT-4.1", BaseURL: "https://api.openai.com/v1", Model: "gpt-4.1"},
+			{Name: "Anthropic Claude", BaseURL: "https://api.anthropic.com", Model: "claude-3-7-sonnet"},
+			{Name: "Google Gemini", BaseURL: "https://generativelanguage.googleapis.com/v1beta", Model: "gemini-1.5-pro"},
 			{Name: "通义千问", BaseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", Model: "qwen-turbo"},
 			{Name: "智谱 GLM", BaseURL: "https://open.bigmodel.cn/api/paas/v4", Model: "glm-4"},
 			{Name: "百川", BaseURL: "https://api.baichuan-ai.com/v1", Model: "baichuan2-53b"},

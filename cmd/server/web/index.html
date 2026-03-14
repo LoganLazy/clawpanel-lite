@@ -843,13 +843,36 @@ async function detectConfig() {
       const r = await fetch('/api/templates');
       const data = await r.json();
       const sel = document.getElementById('templateSelect');
-      sel.innerHTML = '<option value="">选择模板</option>';
-      data.forEach((t) => {
+      sel.innerHTML = '';
+      const optDefault = document.createElement('option');
+      optDefault.value = '';
+      optDefault.textContent = '选择模板';
+      sel.appendChild(optDefault);
+
+      const globalHeader = document.createElement('option');
+      globalHeader.disabled = true;
+      globalHeader.textContent = '— 国外模板 —';
+      sel.appendChild(globalHeader);
+
+      data.slice(0, 4).forEach((t) => {
         const opt = document.createElement('option');
         opt.value = JSON.stringify(t);
         opt.textContent = t.name;
         sel.appendChild(opt);
       });
+
+      const cnHeader = document.createElement('option');
+      cnHeader.disabled = true;
+      cnHeader.textContent = '— 国产模板 —';
+      sel.appendChild(cnHeader);
+
+      data.slice(4).forEach((t) => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify(t);
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+
       sel.addEventListener('change', () => {
         if (!sel.value) return;
         const t = JSON.parse(sel.value);
