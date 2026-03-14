@@ -500,6 +500,11 @@ function setActiveSection(name) {
         });
         const data = await r.json();
         document.getElementById('initInstallOutput').textContent = JSON.stringify(data, null, 2);
+        const outText = (data.output || '').toLowerCase();
+        if (outText.includes('installed successfully')) {
+          document.getElementById('initConfigOutput').textContent = '安装完成，请填写配置';
+          document.getElementById('initModel').focus();
+        }
       } catch (e) {
         document.getElementById('initInstallOutput').textContent = '安装失败，请重试';
       } finally {
@@ -601,6 +606,9 @@ function setActiveSection(name) {
     }
 
     async function updateOpenClaw(version) {
+      if (!confirm('确定要更新 OpenClaw 吗？更新会覆盖到最新版本。')) {
+        return;
+      }
       const outEl = document.getElementById('dashOutput');
       if (outEl) outEl.textContent = '更新中...';
       try {
@@ -611,6 +619,8 @@ function setActiveSection(name) {
         });
         const data = await r.json();
         if (outEl) outEl.textContent = data.output || '更新完成';
+        await loadOpenClawVersion();
+        await checkUpdates();
       } catch (e) {
         if (outEl) outEl.textContent = '更新失败';
       }
