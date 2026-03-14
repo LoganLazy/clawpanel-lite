@@ -1030,6 +1030,8 @@ func updateConfigFile(path string, payload configPayload) error {
 
 	return nil
 }
+
+func ensureConfigFile(pathRaw string) error {
 	path := expand(pathRaw)
 	if fileExists(path) {
 		return nil
