@@ -450,7 +450,7 @@ func main() {
 		if payload.Version == "cn" {
 			url = installScriptCN
 		}
-		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash")
+		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash -s -- --no-onboard")
 		if strings.Contains(out, "installed successfully") && strings.Contains(out, "/dev/tty") {
 			out = out + "\n\nNOTE: OpenClaw 已安装，但最后的交互式 setup 需要 TTY。\n请在终端执行：openclaw setup"
 		}
