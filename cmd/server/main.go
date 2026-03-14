@@ -69,8 +69,10 @@ type installPayload struct {
 	Version string `json:"version"`
 }
 
-type logsResp struct {
-	Output string `json:"output"`
+type initStatusResp struct {
+	OpenClawInstalled bool   `json:"openclawInstalled"`
+	ConfigFound       bool   `json:"configFound"`
+	ConfigPath        string `json:"configPath"`
 }
 
 type systemResp struct {
@@ -434,27 +436,38 @@ func main() {
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
-	mux.HandleFunc("/api/install", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/init/status", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		path, found := detectConfigPath()
+		writeJSON(w, initStatusResp{OpenClawInstalled: openclawExists(), ConfigFound: found, ConfigPath: path})
+	}))
+
+	mux.HandleFunc("/api/init/config", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 		body, _ := io.ReadAll(r.Body)
-		var payload installPayload
-		_ = json.Unmarshal(body, &payload)
-		if openclawExists() {
-			writeJSON(w, map[string]string{"output": "openclaw already installed"})
+		var payload configPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
 			return
 		}
-		url := installScript
-		if payload.Version == "cn" {
-			url = installScriptCN
+		if strings.TrimSpace(payload.Model) == "" {
+			payload.Model = "openai/gpt-4o-mini"
 		}
-		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash -s -- --no-onboard")
-		if strings.Contains(out, "installed successfully") && strings.Contains(out, "/dev/tty") {
-			out = out + "\n\nNOTE: OpenClaw 已安装，但最后的交互式 setup 需要 TTY。\n请在终端执行：openclaw setup"
+		if strings.TrimSpace(payload.BaseURL) == "" {
+			payload.BaseURL = "https://api.openai.com/v1"
 		}
-		writeJSON(w, map[string]string{"output": out})
+		path, _ := detectConfigPath()
+		if err := ensureConfigFile(path); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := updateConfigFile(path, payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		writeJSON(w, map[string]string{"status": "ok"})
 	}))
 
 	mux.HandleFunc("/api/chat", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
@@ -977,6 +990,17 @@ func updateConfigFile(path string, payload configPayload) error {
 	}
 
 	return nil
+}
+func ensureConfigFile(pathRaw string) error {
+	path := expand(pathRaw)
+	if fileExists(path) {
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return err
+	}
+	minimal := []byte("{}")
+	return os.WriteFile(path, minimal, 0600)
 }
 
 func updateChannels(path string, payload channelPayload) error {

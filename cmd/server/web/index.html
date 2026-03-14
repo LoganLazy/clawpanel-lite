@@ -19,6 +19,41 @@
   </header>
 
   <div class="container">
+    <div id="initOverlay" class="init-overlay hidden">
+      <div class="init-card">
+        <h2>初始化向导</h2>
+        <p class="muted">检测到 OpenClaw 未完成初始化，请按步骤设置</p>
+        <div class="row">
+          <label>安装版本</label>
+          <select id="initInstallVersion">
+            <option value="normal">官方版</option>
+            <option value="cn">国内版</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button id="initInstallBtn" class="success" onclick="initInstall()">安装 OpenClaw</button>
+        </div>
+        <pre id="initInstallOutput" class="status"></pre>
+        <hr class="sep" />
+        <p class="muted">安装完成后填写模型配置</p>
+        <div class="row">
+          <label>Model</label>
+          <input id="initModel" value="openai/gpt-4o-mini" />
+        </div>
+        <div class="row">
+          <label>Base URL</label>
+          <input id="initBaseUrl" value="https://api.openai.com/v1" />
+        </div>
+        <div class="row">
+          <label>API Key</label>
+          <input id="initApiKey" placeholder="sk-..." />
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="initSaveConfig()">保存配置</button>
+        </div>
+        <pre id="initConfigOutput" class="status"></pre>
+      </div>
+    </div>
     <div class="layout">
       <aside class="sidebar">
         <div class="sidebar-title">功能菜单</div>
@@ -426,9 +461,69 @@ function setActiveSection(name) {
       });
     }
 
+    async function checkInitFlow() {
+      const overlay = document.getElementById('initOverlay');
+      if (!overlay) return;
+      try {
+        const r = await fetch('/api/init/status');
+        if (!r.ok) return;
+        const data = await r.json();
+        if (!data.openclawInstalled || !data.configFound) {
+          overlay.classList.remove('hidden');
+        }
+      } catch (e) {}
+    }
+
+    async function initInstall() {
+      const btn = document.getElementById('initInstallBtn');
+      if (btn) btn.disabled = true;
+      const version = document.getElementById('initInstallVersion')?.value || 'normal';
+      document.getElementById('initInstallOutput').textContent = '安装中...';
+      try {
+        const r = await fetch('/api/install', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ version })
+        });
+        const data = await r.json();
+        document.getElementById('initInstallOutput').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        document.getElementById('initInstallOutput').textContent = '安装失败，请重试';
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function initSaveConfig() {
+      const payload = {
+        model: document.getElementById('initModel').value,
+        baseUrl: document.getElementById('initBaseUrl').value,
+        apiKey: document.getElementById('initApiKey').value,
+      };
+      document.getElementById('initConfigOutput').textContent = '保存中...';
+      try {
+        const r = await fetch('/api/init/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!r.ok) {
+          const err = await r.text();
+          document.getElementById('initConfigOutput').textContent = err || '保存失败';
+          return;
+        }
+        document.getElementById('initConfigOutput').textContent = '保存成功，即将进入面板...';
+        setTimeout(() => window.location.reload(), 800);
+      } catch (e) {
+        document.getElementById('initConfigOutput').textContent = '保存失败';
+      }
+    }
+
     document.querySelectorAll('.nav-item').forEach((btn) => {
       btn.addEventListener('click', () => setActiveSection(btn.dataset.target));
     });
+
+    checkInitFlow();
 
     async function refreshDashboard() {
       const status = await fetch('/api/status').then(r => r.json());
