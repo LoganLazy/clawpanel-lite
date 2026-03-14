@@ -75,6 +75,10 @@ type initStatusResp struct {
 	ConfigPath        string `json:"configPath"`
 }
 
+type logsResp struct {
+	Output string `json:"output"`
+}
+
 type systemResp struct {
 	Uname  string `json:"uname"`
 	Uptime string `json:"uptime"`
