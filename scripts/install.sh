@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 : "${HOME:=/root}"
 export HOME
+set -u
 
 REPO="https://github.com/LoganLazy/clawpanel-lite.git"
 INSTALL_DIR="/opt/clawpanel-lite"

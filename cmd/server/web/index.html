@@ -19,333 +19,368 @@
   </header>
 
   <div class="container">
-    <div class="grid">
-      <section class="card glow">
-        <h2>配置</h2>
-        <p class="muted">修改模型与 API 后可自动生效</p>
-        <div class="row">
-          <label>Model</label>
-          <input id="model" placeholder="anthropic/claude-sonnet-4-5" />
-        </div>
-        <div class="row">
-          <label>Base URL</label>
-          <input id="baseUrl" placeholder="https://api.xxx.com/v1" />
-        </div>
-        <div class="row">
-          <label>API Key</label>
-          <input id="apiKey" placeholder="sk-..." />
-        </div>
-        <div class="row">
-          <label>国产模板</label>
-          <select id="templateSelect"></select>
-        </div>
-        <div class="actions">
-          <button class="secondary" onclick="loadConfig()">刷新</button>
-          <button onclick="saveConfig()">保存</button>
-        </div>
-        <pre id="configStatus" class="status"></pre>
-      </section>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-title">功能菜单</div>
+        <button class="nav-item active" data-target="config">配置</button>
+        <button class="nav-item" data-target="system">系统概况</button>
+        <button class="nav-item" data-target="logs">日志</button>
+        <button class="nav-item" data-target="channels">渠道配置</button>
+        <button class="nav-item" data-target="channels-raw">渠道原始配置</button>
+        <button class="nav-item" data-target="backup">备份 / 恢复</button>
+        <button class="nav-item" data-target="pairing">配对</button>
+        <button class="nav-item" data-target="status">状态</button>
+        <button class="nav-item" data-target="cron-manage">Cron 管理</button>
+        <button class="nav-item" data-target="skills">技能</button>
+        <button class="nav-item" data-target="skills-common">常用技能</button>
+        <button class="nav-item" data-target="browser">浏览器</button>
+        <button class="nav-item" data-target="chat">聊天测试</button>
+        <button class="nav-item" data-target="cron-create">Cron 创建</button>
+        <button class="nav-item" data-target="install">安装 OpenClaw</button>
+        <button class="nav-item" data-target="config-path">配置文件</button>
+      </aside>
 
-      <section class="card">
-        <h2>系统概况</h2>
-        <p class="muted">系统状态 / 资源概览</p>
-        <div class="actions">
-          <button class="secondary" onclick="loadSystem()">刷新系统</button>
-        </div>
-        <pre id="systemOutput" class="status"></pre>
-      </section>
+      <main class="content">
+        <section class="card glow section active" data-section="config">
+          <h2>配置</h2>
+          <p class="muted">修改模型与 API 后可自动生效</p>
+          <div class="row">
+            <label>Model</label>
+            <input id="model" placeholder="anthropic/claude-sonnet-4-5" />
+          </div>
+          <div class="row">
+            <label>Base URL</label>
+            <input id="baseUrl" placeholder="https://api.xxx.com/v1" />
+          </div>
+          <div class="row">
+            <label>API Key</label>
+            <input id="apiKey" placeholder="sk-..." />
+          </div>
+          <div class="row">
+            <label>国产模板</label>
+            <select id="templateSelect"></select>
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="loadConfig()">刷新</button>
+            <button onclick="saveConfig()">保存</button>
+          </div>
+          <pre id="configStatus" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>日志搜索/下载</h2>
-        <p class="muted">关键字过滤 + 下载</p>
-        <div class="row">
-          <label>关键词</label>
-          <input id="logQuery" placeholder="error / warn" />
-        </div>
-        <div class="actions">
-          <button class="secondary" onclick="loadLogs()">刷新日志</button>
-          <button onclick="searchLogs()">搜索</button>
-          <a class="link-btn" href="/api/logs/download" target="_blank">下载日志</a>
-        </div>
-        <pre id="logsOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="system">
+          <h2>系统概况</h2>
+          <p class="muted">系统状态 / 资源概览</p>
+          <div class="actions">
+            <button class="secondary" onclick="loadSystem()">刷新系统</button>
+          </div>
+          <pre id="systemOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>渠道配置</h2>
-        <p class="muted">Telegram / QQ / Discord 简易配置</p>
-        <div class="row">
-          <label>Telegram Bot Token</label>
-          <input id="tgToken" placeholder="123:abc" />
-        </div>
-        <div class="row">
-          <label>Telegram AllowFrom (逗号分隔)</label>
-          <input id="tgAllow" placeholder="tg:123,tg:456" />
-        </div>
-        <hr class="sep" />
-        <div class="row">
-          <label>QQ App ID</label>
-          <input id="qqAppId" placeholder="" />
-        </div>
-        <div class="row">
-          <label>QQ App Key</label>
-          <input id="qqAppKey" placeholder="" />
-        </div>
-        <div class="row">
-          <label>QQ Bot Token</label>
-          <input id="qqBotToken" placeholder="" />
-        </div>
-        <div class="row">
-          <label>QQ AllowFrom (逗号分隔)</label>
-          <input id="qqAllow" placeholder="qq:123,qq:456" />
-        </div>
-        <hr class="sep" />
-        <div class="row">
-          <label>Discord Bot Token</label>
-          <input id="dcToken" placeholder="" />
-        </div>
-        <div class="row">
-          <label>Discord Guild ID</label>
-          <input id="dcGuild" placeholder="" />
-        </div>
-        <div class="row">
-          <label>Discord User ID</label>
-          <input id="dcUser" placeholder="" />
-        </div>
-        <div class="actions">
-          <button class="secondary" onclick="loadChannels()">刷新</button>
-          <button onclick="saveChannels()">保存</button>
-        </div>
-        <pre id="channelStatus" class="status"></pre>
-      </section>
+        <section class="card section" data-section="logs">
+          <h2>日志搜索/下载</h2>
+          <p class="muted">关键字过滤 + 下载</p>
+          <div class="row">
+            <label>关键词</label>
+            <input id="logQuery" placeholder="error / warn" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="loadLogs()">刷新日志</button>
+            <button onclick="searchLogs()">搜索</button>
+            <a class="link-btn" href="/api/logs/download" target="_blank">下载日志</a>
+          </div>
+          <pre id="logsOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>渠道原始配置</h2>
-        <p class="muted">高级渠道配置（JSON）</p>
-        <textarea id="channelsRaw" rows="6" placeholder='{"discord":{...}}'></textarea>
-        <div class="actions">
-          <button class="secondary" onclick="loadChannelsRaw()">加载原始配置</button>
-          <button onclick="saveChannelsRaw()">保存原始配置</button>
-        </div>
-        <pre id="channelsRawStatus" class="status"></pre>
-      </section>
+        <section class="card section" data-section="channels">
+          <h2>渠道配置</h2>
+          <p class="muted">Telegram / QQ / Discord 简易配置</p>
+          <div class="row">
+            <label>Telegram Bot Token</label>
+            <input id="tgToken" placeholder="123:abc" />
+          </div>
+          <div class="row">
+            <label>Telegram AllowFrom (逗号分隔)</label>
+            <input id="tgAllow" placeholder="tg:123,tg:456" />
+          </div>
+          <hr class="sep" />
+          <div class="row">
+            <label>QQ App ID</label>
+            <input id="qqAppId" placeholder="" />
+          </div>
+          <div class="row">
+            <label>QQ App Key</label>
+            <input id="qqAppKey" placeholder="" />
+          </div>
+          <div class="row">
+            <label>QQ Bot Token</label>
+            <input id="qqBotToken" placeholder="" />
+          </div>
+          <div class="row">
+            <label>QQ AllowFrom (逗号分隔)</label>
+            <input id="qqAllow" placeholder="qq:123,qq:456" />
+          </div>
+          <hr class="sep" />
+          <div class="row">
+            <label>Discord Bot Token</label>
+            <input id="dcToken" placeholder="" />
+          </div>
+          <div class="row">
+            <label>Discord Guild ID</label>
+            <input id="dcGuild" placeholder="" />
+          </div>
+          <div class="row">
+            <label>Discord User ID</label>
+            <input id="dcUser" placeholder="" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="loadChannels()">刷新</button>
+            <button onclick="saveChannels()">保存</button>
+          </div>
+          <pre id="channelStatus" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>配置备份 / 恢复</h2>
-        <p class="muted">保护配置，快速回滚</p>
-        <div class="row">
-          <label>备份名称</label>
-          <input id="backupName" placeholder="auto-20260313" />
-        </div>
-        <div class="actions">
-          <button onclick="createBackup()">创建备份</button>
-          <button class="secondary" onclick="listBackups()">查看备份</button>
-        </div>
-        <div class="row">
-          <label>恢复备份（文件名）</label>
-          <input id="restoreName" placeholder="20260313-123000.json" />
-        </div>
-        <div class="actions">
-          <button class="danger" onclick="restoreBackup()">恢复</button>
-        </div>
-        <pre id="backupOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="channels-raw">
+          <h2>渠道原始配置</h2>
+          <p class="muted">高级渠道配置（JSON）</p>
+          <textarea id="channelsRaw" rows="6" placeholder='{"discord":{...}}'></textarea>
+          <div class="actions">
+            <button class="secondary" onclick="loadChannelsRaw()">加载原始配置</button>
+            <button onclick="saveChannelsRaw()">保存原始配置</button>
+          </div>
+          <pre id="channelsRawStatus" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>配对 (Pairing)</h2>
-        <p class="muted">查看/批准配对码</p>
-        <div class="row">
-          <label>频道</label>
-          <select id="pairChannel">
-            <option value="telegram">telegram</option>
-            <option value="discord">discord</option>
-            <option value="qq">qq</option>
-          </select>
-        </div>
-        <div class="row">
-          <label>配对码</label>
-          <input id="pairCode" placeholder="123456" />
-        </div>
-        <div class="actions">
-          <button class="secondary" onclick="listPairing()">查看待批准</button>
-          <button onclick="approvePairing()">批准配对</button>
-        </div>
-        <pre id="pairOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="backup">
+          <h2>配置备份 / 恢复</h2>
+          <p class="muted">保护配置，快速回滚</p>
+          <div class="row">
+            <label>备份名称</label>
+            <input id="backupName" placeholder="auto-20260313" />
+          </div>
+          <div class="actions">
+            <button onclick="createBackup()">创建备份</button>
+            <button class="secondary" onclick="listBackups()">查看备份</button>
+          </div>
+          <div class="row">
+            <label>恢复备份（文件名）</label>
+            <input id="restoreName" placeholder="20260313-123000.json" />
+          </div>
+          <div class="actions">
+            <button class="danger" onclick="restoreBackup()">恢复</button>
+          </div>
+          <pre id="backupOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>状态</h2>
-        <p class="muted">查看 OpenClaw / Gateway 状态</p>
-        <div class="actions">
-          <button class="secondary" onclick="loadStatus()">刷新状态</button>
-          <button class="danger" onclick="restartGateway()">重启 Gateway</button>
-        </div>
-        <pre id="statusOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="pairing">
+          <h2>配对 (Pairing)</h2>
+          <p class="muted">查看/批准配对码</p>
+          <div class="row">
+            <label>频道</label>
+            <select id="pairChannel">
+              <option value="telegram">telegram</option>
+              <option value="discord">discord</option>
+              <option value="qq">qq</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>配对码</label>
+            <input id="pairCode" placeholder="123456" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="listPairing()">查看待批准</button>
+            <button onclick="approvePairing()">批准配对</button>
+          </div>
+          <pre id="pairOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>Cron 管理</h2>
-        <p class="muted">列表 / 删除 / 运行历史</p>
-        <div class="actions">
-          <button class="secondary" onclick="listCron()">列出任务</button>
-        </div>
-        <div class="row">
-          <label>任务 ID</label>
-          <input id="cronId" placeholder="job-id" />
-        </div>
-        <div class="actions">
-          <button class="secondary" onclick="cronRuns()">查看历史</button>
-          <button class="danger" onclick="cronRemove()">删除任务</button>
-        </div>
-        <pre id="cronManage" class="status"></pre>
-      </section>
+        <section class="card section" data-section="status">
+          <h2>状态</h2>
+          <p class="muted">查看 OpenClaw / Gateway 状态</p>
+          <div class="actions">
+            <button class="secondary" onclick="loadStatus()">刷新状态</button>
+            <button class="danger" onclick="restartGateway()">重启 Gateway</button>
+          </div>
+          <pre id="statusOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>技能</h2>
-        <p class="muted">列出/检测技能 + 本地安装管理</p>
-        <div class="row">
-          <label>技能名（info 可选）</label>
-          <input id="skillName" placeholder="skill-id" />
-        </div>
-        <div class="actions">
-          <button class="secondary" onclick="listSkills()">列出技能</button>
-          <button onclick="checkSkills()">检测依赖</button>
-          <button class="secondary" onclick="infoSkill()">详情 info</button>
-        </div>
-        <div class="row">
-          <label>本地技能清单</label>
-          <button class="secondary" onclick="listLocalSkills()">刷新本地技能</button>
-        </div>
-        <pre id="skillsLocal" class="status"></pre>
-        <div class="row">
-          <label>安装/更新/移除技能</label>
-          <input id="skillGit" placeholder="https://github.com/xxx/skill.git" />
-          <input id="skillInstallName" placeholder="可选：技能名" />
-          <select id="skillTarget">
-            <option value="managed">managed (~/.openclaw/skills)</option>
-            <option value="workspace">workspace (workspace/skills)</option>
-          </select>
-        </div>
-        <div class="actions">
-          <button onclick="installSkillLocal()">安装</button>
-          <button class="secondary" onclick="updateSkillLocal()">更新</button>
-          <button class="danger" onclick="removeSkillLocal()">移除</button>
-        </div>
-        <pre id="skillsOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="cron-manage">
+          <h2>Cron 管理</h2>
+          <p class="muted">列表 / 删除 / 运行历史</p>
+          <div class="actions">
+            <button class="secondary" onclick="listCron()">列出任务</button>
+          </div>
+          <div class="row">
+            <label>任务 ID</label>
+            <input id="cronId" placeholder="job-id" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="cronRuns()">查看历史</button>
+            <button class="danger" onclick="cronRemove()">删除任务</button>
+          </div>
+          <pre id="cronManage" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>常用技能（一键安装）</h2>
-        <p class="muted">可在面板内编辑常用技能列表</p>
-        <div class="actions">
-          <button class="secondary" onclick="loadCommonSkills()">加载列表</button>
-          <button class="secondary" onclick="importCommonSkillsSample()">导入示例</button>
-          <button onclick="saveCommonSkills()">保存列表</button>
-        </div>
-        <textarea id="commonSkills" rows="6" placeholder='[{"name":"skill-a","gitUrl":"https://...","target":"managed"}]'></textarea>
-        <div class="row">
-          <label>安装某个常用技能（按 name）</label>
-          <input id="commonSkillName" placeholder="skill-a" />
-        </div>
-        <div class="actions">
-          <button onclick="installCommonSkill()">一键安装</button>
-        </div>
-        <pre id="commonSkillsOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="skills">
+          <h2>技能</h2>
+          <p class="muted">列出/检测技能 + 本地安装管理</p>
+          <div class="row">
+            <label>技能名（info 可选）</label>
+            <input id="skillName" placeholder="skill-id" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="listSkills()">列出技能</button>
+            <button onclick="checkSkills()">检测依赖</button>
+            <button class="secondary" onclick="infoSkill()">详情 info</button>
+          </div>
+          <div class="row">
+            <label>本地技能清单</label>
+            <button class="secondary" onclick="listLocalSkills()">刷新本地技能</button>
+          </div>
+          <pre id="skillsLocal" class="status"></pre>
+          <div class="row">
+            <label>安装/更新/移除技能</label>
+            <input id="skillGit" placeholder="https://github.com/xxx/skill.git" />
+            <input id="skillInstallName" placeholder="可选：技能名" />
+            <select id="skillTarget">
+              <option value="managed">managed (~/.openclaw/skills)</option>
+              <option value="workspace">workspace (workspace/skills)</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button onclick="installSkillLocal()">安装</button>
+            <button class="secondary" onclick="updateSkillLocal()">更新</button>
+            <button class="danger" onclick="removeSkillLocal()">移除</button>
+          </div>
+          <pre id="skillsOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>浏览器</h2>
-        <p class="muted">浏览器状态与插件</p>
-        <div class="actions">
-          <button class="secondary" onclick="browserStatus()">状态</button>
-          <button onclick="browserStart()">启动</button>
-          <button class="danger" onclick="browserStop()">停止</button>
-        </div>
-        <div class="row">
-          <label>打开 URL</label>
-          <input id="browserUrl" placeholder="https://example.com" />
-        </div>
-        <div class="actions">
-          <button onclick="browserOpen()">打开</button>
-        </div>
-        <div class="row">
-          <label>截图路径</label>
-          <input id="shotPath" placeholder="/tmp/openclaw_screenshot.png" />
-        </div>
-        <div class="actions">
-          <button class="secondary" onclick="browserShot()">截图</button>
-        </div>
-        <div class="actions">
-          <button onclick="installExtension()">安装 Chrome 插件</button>
-          <button class="secondary" onclick="extensionPath()">插件路径</button>
-        </div>
-        <pre id="extOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="skills-common">
+          <h2>常用技能（一键安装）</h2>
+          <p class="muted">可在面板内编辑常用技能列表</p>
+          <div class="actions">
+            <button class="secondary" onclick="loadCommonSkills()">加载列表</button>
+            <button class="secondary" onclick="importCommonSkillsSample()">导入示例</button>
+            <button onclick="saveCommonSkills()">保存列表</button>
+          </div>
+          <textarea id="commonSkills" rows="6" placeholder='[{"name":"skill-a","gitUrl":"https://...","target":"managed"}]'></textarea>
+          <div class="row">
+            <label>安装某个常用技能（按 name）</label>
+            <input id="commonSkillName" placeholder="skill-a" />
+          </div>
+          <div class="actions">
+            <button onclick="installCommonSkill()">一键安装</button>
+          </div>
+          <pre id="commonSkillsOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>聊天测试</h2>
-        <p class="muted">发送一条测试消息（默认模型）</p>
-        <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
-        <div class="row">
-          <label>Model (可选)</label>
-          <input id="chatModel" placeholder="留空则默认" />
-        </div>
-        <div class="actions">
-          <button class="success" onclick="sendChat()">发送</button>
-        </div>
-        <pre id="chatOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="browser">
+          <h2>浏览器</h2>
+          <p class="muted">浏览器状态与插件</p>
+          <div class="actions">
+            <button class="secondary" onclick="browserStatus()">状态</button>
+            <button onclick="browserStart()">启动</button>
+            <button class="danger" onclick="browserStop()">停止</button>
+          </div>
+          <div class="row">
+            <label>打开 URL</label>
+            <input id="browserUrl" placeholder="https://example.com" />
+          </div>
+          <div class="actions">
+            <button onclick="browserOpen()">打开</button>
+          </div>
+          <div class="row">
+            <label>截图路径</label>
+            <input id="shotPath" placeholder="/tmp/openclaw_screenshot.png" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="browserShot()">截图</button>
+          </div>
+          <div class="actions">
+            <button onclick="installExtension()">安装 Chrome 插件</button>
+            <button class="secondary" onclick="extensionPath()">插件路径</button>
+          </div>
+          <pre id="extOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>定时任务 (Cron)</h2>
-        <p class="muted">快速创建运维任务</p>
-        <div class="row">
-          <label>任务名称</label>
-          <input id="cronName" placeholder="panel-job" />
-        </div>
-        <div class="row">
-          <label>内容</label>
-          <textarea id="cronText" rows="3" placeholder="例如：每30分钟检查网关状态"></textarea>
-        </div>
-        <div class="row">
-          <label>间隔分钟</label>
-          <input id="cronMinutes" placeholder="30" />
-        </div>
-        <div class="row">
-          <label>模式</label>
-          <select id="cronMode">
-            <option value="every">循环执行</option>
-            <option value="once">一次性</option>
-          </select>
-        </div>
-        <div class="actions">
-          <button onclick="addCron()">创建任务</button>
-        </div>
-        <pre id="cronOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="chat">
+          <h2>聊天测试</h2>
+          <p class="muted">发送一条测试消息（默认模型）</p>
+          <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
+          <div class="row">
+            <label>Model (可选)</label>
+            <input id="chatModel" placeholder="留空则默认" />
+          </div>
+          <div class="actions">
+            <button class="success" onclick="sendChat()">发送</button>
+          </div>
+          <pre id="chatOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>安装 OpenClaw</h2>
-        <p class="muted">如未安装，可一键安装</p>
-        <div class="actions">
-          <button onclick="installOpenClaw()">一键安装</button>
-        </div>
-        <pre id="installOutput" class="status"></pre>
-      </section>
+        <section class="card section" data-section="cron-create">
+          <h2>定时任务 (Cron)</h2>
+          <p class="muted">快速创建运维任务</p>
+          <div class="row">
+            <label>任务名称</label>
+            <input id="cronName" placeholder="panel-job" />
+          </div>
+          <div class="row">
+            <label>内容</label>
+            <textarea id="cronText" rows="3" placeholder="例如：每30分钟检查网关状态"></textarea>
+          </div>
+          <div class="row">
+            <label>间隔分钟</label>
+            <input id="cronMinutes" placeholder="30" />
+          </div>
+          <div class="row">
+            <label>模式</label>
+            <select id="cronMode">
+              <option value="every">循环执行</option>
+              <option value="once">一次性</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button onclick="addCron()">创建任务</button>
+          </div>
+          <pre id="cronOutput" class="status"></pre>
+        </section>
 
-      <section class="card">
-        <h2>配置文件</h2>
-        <p class="muted">自动探测配置路径</p>
-        <div class="actions">
-          <button class="secondary" onclick="detectConfig()">探测配置路径</button>
-        </div>
-        <pre id="configPath" class="status"></pre>
-      </section>
+        <section class="card section" data-section="install">
+          <h2>安装 OpenClaw</h2>
+          <p class="muted">如未安装，可一键安装</p>
+          <div class="actions">
+            <button onclick="installOpenClaw()">一键安装</button>
+          </div>
+          <pre id="installOutput" class="status"></pre>
+        </section>
+
+        <section class="card section" data-section="config-path">
+          <h2>配置文件</h2>
+          <p class="muted">自动探测配置路径</p>
+          <div class="actions">
+            <button class="secondary" onclick="detectConfig()">探测配置路径</button>
+          </div>
+          <pre id="configPath" class="status"></pre>
+        </section>
+      </main>
     </div>
   </div>
 
   <footer class="muted">ClawPanel Lite · Minimal Web UI</footer>
 
   <script>
+    function setActiveSection(name) {
+      document.querySelectorAll('.section').forEach((el) => {
+        el.classList.toggle('active', el.dataset.section === name);
+      });
+      document.querySelectorAll('.nav-item').forEach((el) => {
+        el.classList.toggle('active', el.dataset.target === name);
+      });
+    }
+
+    document.querySelectorAll('.nav-item').forEach((btn) => {
+      btn.addEventListener('click', () => setActiveSection(btn.dataset.target));
+    });
+
     async function detectConfig() {
       const r = await fetch('/api/config/status');
       const data = await r.json();
@@ -663,20 +698,20 @@
       document.getElementById('skillsOutput').textContent = out;
     }
 
-        function importCommonSkillsSample() {
+    async function loadCommonSkills() {
+      const r = await fetch('/api/skills/common/list');
+      const data = await r.json();
+      document.getElementById('commonSkills').value = JSON.stringify(data, null, 2);
+      document.getElementById('commonSkillsOutput').textContent = '已加载';
+    }
+
+    function importCommonSkillsSample() {
       const sample = [
         { name: 'skill-a', gitUrl: 'https://github.com/your/skill-a.git', target: 'managed' },
         { name: 'skill-b', gitUrl: 'https://github.com/your/skill-b.git', target: 'workspace' }
       ];
       document.getElementById('commonSkills').value = JSON.stringify(sample, null, 2);
       document.getElementById('commonSkillsOutput').textContent = '已导入示例清单';
-    }
-
-async function loadCommonSkills() {
-      const r = await fetch('/api/skills/common/list');
-      const data = await r.json();
-      document.getElementById('commonSkills').value = JSON.stringify(data, null, 2);
-      document.getElementById('commonSkillsOutput').textContent = '已加载';
     }
 
     async function saveCommonSkills() {
