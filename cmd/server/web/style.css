@@ -62,7 +62,8 @@ body {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 16px;
-  height: fit-content;
+  height: calc(100vh - 120px);
+  overflow: auto;
 }
 
 .sidebar-title {

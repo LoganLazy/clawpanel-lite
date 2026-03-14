@@ -165,6 +165,7 @@ func main() {
 	pass := envOr("CLAWPANEL_PASS", defaultPass)
 	bin := envOr("CLAWPANEL_OPENCLAW_BIN", "openclaw")
 	installScript := envOr("CLAWPANEL_INSTALL_SCRIPT", "https://openclaw.ai/install.sh")
+	installScriptCN := envOr("CLAWPANEL_INSTALL_SCRIPT_CN", installScript)
 	profile := envOr("CLAWPANEL_PROFILE", "")
 
 	gOpenclawBin = bin
@@ -437,9 +438,9 @@ func main() {
 		}
 		url := installScript
 		if payload.Version == "cn" {
-			url = "https://openclaw.ai/install-zh.sh"
+			url = installScriptCN
 		}
-		out := runCmd("bash", "-lc", "curl -fsSL "+url+" | bash")
+		out := runCmd("bash", "-lc", "HOME=/root curl -fsSL "+url+" | bash")
 		writeJSON(w, map[string]string{"output": out})
 	}))
 

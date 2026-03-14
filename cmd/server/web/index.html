@@ -661,6 +661,7 @@ async function detectConfig() {
     async function installOpenClaw() {
       const version = (document.getElementById('installVersion') || document.getElementById('installVersion2'))?.value || 'normal';
       document.getElementById('dashOutput').textContent = '安装中...';
+      document.getElementById('installOutput').textContent = '安装中...';
       const r = await fetch('/api/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version }) });
       const data = await r.json();
       document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
