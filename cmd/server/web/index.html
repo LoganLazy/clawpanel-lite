@@ -32,7 +32,6 @@
         </div>
         <div class="actions">
           <button id="initInstallBtn" class="success" onclick="initInstall()">安装 OpenClaw</button>
-          <button class="secondary" onclick="skipInit()">先跳过，稍后配置</button>
         </div>
         <pre id="initInstallOutput" class="status"></pre>
         <hr class="sep" />
@@ -518,11 +517,6 @@ function setActiveSection(name) {
       } catch (e) {
         document.getElementById('initConfigOutput').textContent = '保存失败';
       }
-    }
-
-    function skipInit() {
-      const overlay = document.getElementById('initOverlay');
-      if (overlay) overlay.classList.add('hidden');
     }
 
     document.querySelectorAll('.nav-item').forEach((btn) => {
