@@ -411,20 +411,14 @@
       btn.addEventListener('click', () => setActiveSection(btn.dataset.target));
     });
 
-        async function refreshDashboard() {
+    async function refreshDashboard() {
       const status = await fetch('/api/status').then(r => r.json());
       const sys = await fetch('/api/system').then(r => r.json());
-      document.getElementById('dashOpenclaw').textContent = (status.openclaw || '').split('
-')[0] || 'unknown';
-      document.getElementById('dashGateway').textContent = (status.gateway || '').split('
-')[0] || 'unknown';
-      const memLine = (sys.mem || '').split('
-')[1] || (sys.mem || '').split('
-')[0] || '';
+      document.getElementById('dashOpenclaw').textContent = (status.openclaw || '').split('\n')[0] || 'unknown';
+      document.getElementById('dashGateway').textContent = (status.gateway || '').split('\n')[0] || 'unknown';
+      const memLine = (sys.mem || '').split('\n')[1] || (sys.mem || '').split('\n')[0] || '';
       document.getElementById('dashMem').textContent = memLine || 'unknown';
-      const diskLine = (sys.disk || '').split('
-')[1] || (sys.disk || '').split('
-')[0] || '';
+      const diskLine = (sys.disk || '').split('\n')[1] || (sys.disk || '').split('\n')[0] || '';
       document.getElementById('dashDisk').textContent = diskLine || 'unknown';
       document.getElementById('dashOutput').textContent = '已刷新';
     }
