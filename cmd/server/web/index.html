@@ -86,7 +86,7 @@
         </section>
 
         <section class="card section" data-section="chat">
-          <div class="section-title"><h2>实时聊天</h2><span class="muted">Gateway WS</span></div>
+          <div class="section-title"><h2>实时聊天</h2><span class="muted">Streaming</span></div>
           <div class="chat-layout">
             <div class="chat-sidebar">
               <div class="row">
@@ -96,6 +96,10 @@
               <div class="row">
                 <label>Gateway Token</label>
                 <input id="gwToken" placeholder="token" />
+              </div>
+              <div class="row">
+                <label>Session ID</label>
+                <input id="chatSession" placeholder="agent:main:main" />
               </div>
               <div class="actions">
                 <button class="secondary" onclick="connectGateway()">连接</button>
@@ -118,13 +122,65 @@
 
         <section class="card section" data-section="models">
           <div class="section-title"><h2>模型配置</h2><span class="muted">providers / models</span></div>
-          <p class="muted">基于 openclaw.json 的 models/providers 配置</p>
-          <div class="actions">
-            <button class="secondary" onclick="loadRawConfig()">加载配置</button>
-            <button onclick="saveRawConfig()">保存配置</button>
+          <div class="row">
+            <label>当前主模型</label>
+            <input id="modelPrimary" placeholder="openai/gpt-4o" />
+            <button class="secondary" onclick="setPrimaryModel()">设为主模型</button>
           </div>
-          <textarea id="configRaw" rows="12" placeholder="openclaw.json 原始配置"></textarea>
-          <pre id="configRawStatus" class="status"></pre>
+          <div class="models-layout">
+            <div class="models-sidebar">
+              <div class="actions">
+                <button class="secondary" onclick="loadModels()">刷新</button>
+                <button onclick="addProvider()">添加服务商</button>
+              </div>
+              <div id="providerList" class="provider-list"></div>
+            </div>
+            <div class="models-editor">
+              <div class="row">
+                <label>服务商</label>
+                <input id="providerKey" placeholder="openai" />
+              </div>
+              <div class="row">
+                <label>Base URL</label>
+                <input id="providerBase" placeholder="https://api.openai.com/v1" />
+              </div>
+              <div class="row">
+                <label>API 类型</label>
+                <select id="providerApi">
+                  <option value="openai-completions">OpenAI 兼容</option>
+                  <option value="anthropic-messages">Anthropic 原生</option>
+                  <option value="openai-responses">OpenAI Responses</option>
+                  <option value="google-gemini">Google Gemini</option>
+                </select>
+              </div>
+              <div class="row">
+                <label>API Key</label>
+                <input id="providerKeyValue" placeholder="sk-..." />
+              </div>
+              <div class="row">
+                <label>模型 ID</label>
+                <input id="modelId" placeholder="gpt-4o" />
+              </div>
+              <div class="row">
+                <label>模型名称</label>
+                <input id="modelName" placeholder="GPT-4o" />
+              </div>
+              <div class="row">
+                <label>上下文(可选)</label>
+                <input id="modelContext" placeholder="128000" />
+              </div>
+              <div class="row">
+                <label>推理模型</label>
+                <select id="modelReasoning"><option value="false">否</option><option value="true">是</option></select>
+              </div>
+              <div class="actions">
+                <button class="secondary" onclick="saveProvider()">保存服务商</button>
+                <button class="secondary" onclick="addModel()">添加模型</button>
+                <button class="danger" onclick="deleteProvider()">删除服务商</button>
+              </div>
+              <pre id="modelsStatus" class="status"></pre>
+            </div>
+          </div>
         </section>
 
         <section class="card section" data-section="gateway">
@@ -347,6 +403,7 @@
 
   <script>
     const state = {
+      models: { config: null, providerKey: null },
       gateway: { connected: false, ws: null, sessionKey: null },
       currentSession: null,
       chatRuns: {},
@@ -374,7 +431,7 @@
       document.getElementById('dashMem').textContent = data.memory || '-';
       document.getElementById('dashDisk').textContent = data.disk || '-';
       const st = await jsonFetch('/api/status');
-      const firstLine = (val) => (val || '').toString().split(/\n/)[0] || '-';
+      const firstLine = (val) => (val || '').toString().split("\n")[0] || '-';
       document.getElementById('dashOpenclaw').textContent = firstLine(st.openclaw);
       document.getElementById('dashGateway').textContent = firstLine(st.gateway);
       document.getElementById('dashOutput').textContent = JSON.stringify({system:data, status:st}, null, 2);
@@ -394,10 +451,6 @@
     function handleWsMessage(raw) {
       let msg = null;
       try { msg = JSON.parse(raw); } catch { return; }
-      if (msg.type === 'event' && msg.event === 'connect.challenge') {
-        // 简化：不做签名，直接跳过
-        return;
-      }
       if (msg.type === 'event' && msg.event === 'chat.delta') {
         const runId = msg.payload?.runId || 'run';
         appendDelta(runId, msg.payload?.delta || '');
@@ -451,7 +504,6 @@
       if (!text) return;
       appendUser(text);
       document.getElementById('chatInput').value = '';
-      // fallback to HTTP chat
       const data = await jsonFetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text})});
       appendAssistant(data.output || '');
     }
@@ -464,16 +516,104 @@
       document.getElementById('sessionList').textContent = '暂不支持会话列表（轻量版）';
     }
 
-    // ===== Models (raw config) =====
-    async function loadRawConfig() {
-      const data = await jsonFetch('/api/config/raw');
-      document.getElementById('configRaw').value = JSON.stringify(data, null, 2);
+    // ===== Models =====
+    async function loadModels() {
+      const cfg = await jsonFetch('/api/config/raw');
+      state.models.config = cfg;
+      const primary = cfg?.agents?.defaults?.model?.primary || '';
+      document.getElementById('modelPrimary').value = primary;
+      renderProviders();
     }
-    async function saveRawConfig() {
-      const raw = document.getElementById('configRaw').value;
-      const data = JSON.parse(raw);
-      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
-      document.getElementById('configRawStatus').textContent = '已保存';
+
+    function renderProviders() {
+      const list = document.getElementById('providerList');
+      const providers = (state.models.config?.models?.providers) || {};
+      list.innerHTML = '';
+      Object.keys(providers).forEach(key => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.textContent = key;
+        item.onclick = () => selectProvider(key);
+        list.appendChild(item);
+      });
+    }
+
+    function selectProvider(key) {
+      state.models.providerKey = key;
+      const p = state.models.config.models.providers[key];
+      document.getElementById('providerKey').value = key;
+      document.getElementById('providerBase').value = p.baseUrl || '';
+      document.getElementById('providerApi').value = p.api || 'openai-completions';
+      document.getElementById('providerKeyValue').value = p.apiKey || '';
+      document.getElementById('modelsStatus').textContent = `已选服务商: ${key} (模型数: ${(p.models||[]).length})`;
+    }
+
+    function addProvider() {
+      document.getElementById('providerKey').value = '';
+      document.getElementById('providerBase').value = '';
+      document.getElementById('providerKeyValue').value = '';
+      document.getElementById('providerApi').value = 'openai-completions';
+      document.getElementById('modelsStatus').textContent = '填写后保存服务商';
+    }
+
+    async function saveProvider() {
+      const cfg = state.models.config || await jsonFetch('/api/config/raw');
+      if (!cfg.models) cfg.models = { providers: {} };
+      if (!cfg.models.providers) cfg.models.providers = {};
+      const key = document.getElementById('providerKey').value.trim();
+      if (!key) return;
+      cfg.models.providers[key] = {
+        baseUrl: document.getElementById('providerBase').value.trim(),
+        apiKey: document.getElementById('providerKeyValue').value.trim(),
+        api: document.getElementById('providerApi').value,
+        models: cfg.models.providers[key]?.models || [],
+      };
+      state.models.config = cfg;
+      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+      document.getElementById('modelsStatus').textContent = '服务商已保存';
+      renderProviders();
+      state.models.providerKey = key;
+    }
+
+    async function addModel() {
+      const key = document.getElementById('providerKey').value.trim();
+      if (!key) return;
+      const cfg = state.models.config || await jsonFetch('/api/config/raw');
+      const p = cfg.models?.providers?.[key];
+      if (!p) return;
+      const id = document.getElementById('modelId').value.trim();
+      if (!id) return;
+      const name = document.getElementById('modelName').value.trim() || id;
+      const ctx = parseInt(document.getElementById('modelContext').value || '0') || 0;
+      const reasoning = document.getElementById('modelReasoning').value === 'true';
+      if (!Array.isArray(p.models)) p.models = [];
+      p.models.push({ id, name, contextWindow: ctx || undefined, reasoning });
+      state.models.config = cfg;
+      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+      document.getElementById('modelsStatus').textContent = `模型 ${id} 已添加`;
+      loadModels();
+    }
+
+    async function deleteProvider() {
+      const key = document.getElementById('providerKey').value.trim();
+      if (!key) return;
+      const cfg = state.models.config || await jsonFetch('/api/config/raw');
+      if (cfg.models?.providers?.[key]) delete cfg.models.providers[key];
+      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+      document.getElementById('modelsStatus').textContent = `已删除 ${key}`;
+      loadModels();
+    }
+
+    async function setPrimaryModel() {
+      const primary = document.getElementById('modelPrimary').value.trim();
+      if (!primary) return;
+      const cfg = state.models.config || await jsonFetch('/api/config/raw');
+      if (!cfg.agents) cfg.agents = {};
+      if (!cfg.agents.defaults) cfg.agents.defaults = {};
+      if (!cfg.agents.defaults.model) cfg.agents.defaults.model = {};
+      cfg.agents.defaults.model.primary = primary;
+      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+      document.getElementById('modelsStatus').textContent = '主模型已更新';
     }
 
     // ===== Gateway =====
@@ -589,9 +729,28 @@
       document.getElementById('cronManage').textContent = out;
       document.getElementById('cronList').textContent = out;
     }
+    async function cronStatus() {
+      const res = await jsonFetch('/api/cron/status');
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
     async function cronRuns() {
       const id = document.getElementById('cronId').value;
       const res = await jsonFetch(`/api/cron/runs?id=${encodeURIComponent(id)}`);
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+    async function cronRunNow() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch('/api/cron/run', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+    async function cronEnable() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch('/api/cron/enable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+    async function cronDisable() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch('/api/cron/disable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
       document.getElementById('cronManage').textContent = res.output || '';
     }
     async function cronRemove() {
@@ -687,33 +846,6 @@
     }
 
     refreshDashboard();
-
-    async function cronStatus() {
-      const res = await jsonFetch('/api/cron/status');
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-
-
-    async function cronRunNow() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch('/api/cron/run', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-
-
-    async function cronEnable() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch('/api/cron/enable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-
-
-    async function cronDisable() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch('/api/cron/disable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-
 </script>
 </body>
 </html>

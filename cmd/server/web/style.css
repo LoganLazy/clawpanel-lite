@@ -349,3 +349,8 @@ pre.status {
 .memory-sidebar { background: rgba(15,23,42,0.6); padding: 10px; border-radius: 12px; min-height: 240px; }
 .memory-sidebar .file-item { padding: 6px 8px; border-radius: 6px; cursor: pointer; }
 .memory-sidebar .file-item:hover { background: rgba(148,163,184,0.15); }
+
+.models-layout { display: grid; grid-template-columns: 220px 1fr; gap: 12px; }
+.models-sidebar { background: rgba(15,23,42,0.6); padding: 10px; border-radius: 12px; min-height: 240px; }
+.provider-list .file-item { padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.provider-list .file-item:hover { background: rgba(148,163,184,0.15); }
