@@ -238,49 +238,53 @@
         </section>
 
         <section class="card section" data-section="channels">
-          <div class="section-title"><h2>消息渠道</h2><span class="muted">配置 + 配对</span></div>
-          <div class="row">
-            <label>Telegram Bot Token</label>
-            <input id="tgToken" placeholder="123:abc" />
+          <div class="section-title"><h2>消息渠道</h2><span class="muted">引导式配置</span></div>
+          <p class="muted">按平台填写凭证，保存后 Gateway 自动生效</p>
+
+          <div class="channel-card">
+            <div class="channel-head">
+              <div>Telegram</div>
+              <button class="secondary" onclick="toggleChannel('tg')">展开/收起</button>
+            </div>
+            <div id="channel-tg" class="channel-body">
+              <p class="muted">在 BotFather 创建 Bot，填入 Token 与允许用户。</p>
+              <div class="row"><label>Bot Token</label><input id="tgToken" placeholder="123:abc" /></div>
+              <div class="row"><label>AllowFrom</label><input id="tgAllow" placeholder="tg:123,tg:456" /></div>
+            </div>
           </div>
-          <div class="row">
-            <label>Telegram AllowFrom</label>
-            <input id="tgAllow" placeholder="tg:123,tg:456" />
+
+          <div class="channel-card">
+            <div class="channel-head">
+              <div>QQ 机器人</div>
+              <button class="secondary" onclick="toggleChannel('qq')">展开/收起</button>
+            </div>
+            <div id="channel-qq" class="channel-body">
+              <p class="muted">填入 AppID/AppKey/BotToken。</p>
+              <div class="row"><label>QQ App ID</label><input id="qqAppId" /></div>
+              <div class="row"><label>QQ App Key</label><input id="qqAppKey" /></div>
+              <div class="row"><label>QQ Bot Token</label><input id="qqBotToken" /></div>
+              <div class="row"><label>AllowFrom</label><input id="qqAllow" /></div>
+            </div>
           </div>
-          <hr class="sep" />
-          <div class="row">
-            <label>QQ App ID</label>
-            <input id="qqAppId" />
+
+          <div class="channel-card">
+            <div class="channel-head">
+              <div>Discord</div>
+              <button class="secondary" onclick="toggleChannel('dc')">展开/收起</button>
+            </div>
+            <div id="channel-dc" class="channel-body">
+              <p class="muted">在 Discord Developer Portal 创建 Bot。</p>
+              <div class="row"><label>Bot Token</label><input id="dcToken" /></div>
+              <div class="row"><label>Guild ID</label><input id="dcGuild" /></div>
+              <div class="row"><label>User ID</label><input id="dcUser" /></div>
+            </div>
           </div>
-          <div class="row">
-            <label>QQ App Key</label>
-            <input id="qqAppKey" />
-          </div>
-          <div class="row">
-            <label>QQ Bot Token</label>
-            <input id="qqBotToken" />
-          </div>
-          <div class="row">
-            <label>QQ AllowFrom</label>
-            <input id="qqAllow" />
-          </div>
-          <hr class="sep" />
-          <div class="row">
-            <label>Discord Bot Token</label>
-            <input id="dcToken" />
-          </div>
-          <div class="row">
-            <label>Discord Guild ID</label>
-            <input id="dcGuild" />
-          </div>
-          <div class="row">
-            <label>Discord User ID</label>
-            <input id="dcUser" />
-          </div>
+
           <div class="actions">
             <button class="secondary" onclick="loadChannels()">刷新</button>
             <button onclick="saveChannels()">保存</button>
           </div>
+
           <div class="row">
             <label>配对频道</label>
             <select id="pairChannel"><option value="telegram">telegram</option><option value="discord">discord</option><option value="qq">qq</option></select>
@@ -870,6 +874,12 @@ function abortChat() {
     }
 
     refreshDashboard();
+
+    function toggleChannel(id) {
+      const el = document.getElementById('channel-' + id);
+      if (!el) return;
+      el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    }
 </script>
 </body>
 </html>
