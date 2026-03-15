@@ -682,10 +682,7 @@ func main() {
 		}
 
 		writeLine := func(line string) {
-			_, _ = w.Write([]byte("data: " + strings.ReplaceAll(line, "
-", " ") + "
-
-"))
+			_, _ = w.Write([]byte("data: " + strings.ReplaceAll(line, "\n", " ") + "\n\n"))
 			flusher.Flush()
 		}
 
@@ -701,10 +698,7 @@ func main() {
 		go scan(stderr)
 		scan(stdout)
 		_ = cmd.Wait()
-		_, _ = w.Write([]byte("event: done
-data: ok
-
-"))
+		_, _ = w.Write([]byte("event: done\ndata: ok\n\n"))
 		flusher.Flush()
 	}))
 mux.HandleFunc("/api/chat", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
