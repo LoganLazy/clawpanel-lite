@@ -636,7 +636,78 @@ func main() {
 		writeJSON(w, map[string]interface{}{"current": current, "latest": latest, "hasUpdate": hasUpdate, "installed": current != ""})
 	}))
 
-	mux.HandleFunc("/api/chat", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+	
+
+	mux.HandleFunc("/api/chat/stream", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload chatPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		msg := strings.TrimSpace(payload.Message)
+		if msg == "" {
+			msg = "你好"
+		}
+		args := withProfile(profile, "agent", "--message", msg)
+		if strings.TrimSpace(payload.Model) != "" {
+			args = append(args, "--model", payload.Model)
+		}
+		cmd := exec.Command(bin, args...)
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			http.Error(w, "failed to start", http.StatusInternalServerError)
+			return
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			http.Error(w, "failed to start", http.StatusInternalServerError)
+			return
+		}
+		if err := cmd.Start(); err != nil {
+			http.Error(w, "failed to start", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+			return
+		}
+
+		writeLine := func(line string) {
+			_, _ = w.Write([]byte("data: " + strings.ReplaceAll(line, "
+", " ") + "
+
+"))
+			flusher.Flush()
+		}
+
+		scan := func(r io.Reader) {
+			scanner := bufio.NewScanner(r)
+			buf := make([]byte, 0, 64*1024)
+			scanner.Buffer(buf, 1024*1024)
+			for scanner.Scan() {
+				writeLine(scanner.Text())
+			}
+		}
+
+		go scan(stderr)
+		scan(stdout)
+		_ = cmd.Wait()
+		_, _ = w.Write([]byte("event: done
+data: ok
+
+"))
+		flusher.Flush()
+	}))
+mux.HandleFunc("/api/chat", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
