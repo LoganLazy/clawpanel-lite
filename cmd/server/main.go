@@ -309,6 +309,52 @@ func main() {
 		_, _ = w.Write(data)
 	}))
 
+
+    	mux.HandleFunc("/api/config/raw", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+    		if r.Method == http.MethodGet {
+    			path, found := detectConfigPath()
+    			if !found {
+				http.Error(w, "config not found", http.StatusNotFound)
+				return
+			}
+    			data, err := os.ReadFile(path)
+    			if err != nil {
+				http.Error(w, "failed to read config", http.StatusInternalServerError)
+				return
+			}
+    			clean := jsonc.ToJSON(data)
+    			var payload map[string]any
+    			_ = json.Unmarshal(clean, &payload)
+    			writeJSON(w, payload)
+    			return
+    		}
+    		if r.Method == http.MethodPost {
+    			path, found := detectConfigPath()
+    			if !found {
+				http.Error(w, "config not found", http.StatusNotFound)
+				return
+			}
+    			body, _ := io.ReadAll(r.Body)
+    			var payload map[string]any
+    			if err := json.Unmarshal(body, &payload); err != nil {
+				http.Error(w, "invalid json", http.StatusBadRequest)
+				return
+			}
+    			buf, err := json.MarshalIndent(payload, "", "  ")
+    			if err != nil {
+				http.Error(w, "failed to serialize", http.StatusBadRequest)
+				return
+			}
+    			if err := os.WriteFile(path, buf, 0644); err != nil {
+				http.Error(w, "failed to write config", http.StatusInternalServerError)
+				return
+			}
+    			writeJSON(w, map[string]string{"status": "ok"})
+    			return
+    		}
+    		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+    	}))
+
 	mux.HandleFunc("/api/config/set", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -677,7 +723,58 @@ func main() {
 		writeJSON(w, map[string]string{"output": out})
 	}))
 
-	mux.HandleFunc("/api/cron/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+	
+	mux.HandleFunc("/api/cron/status", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		out := runCmd(bin, withProfile(profile, "cron", "status")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/cron/enable", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload cronAction
+		if err := json.Unmarshal(body, &payload); err != nil || payload.ID == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "cron", "enable", payload.ID)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/cron/disable", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload cronAction
+		if err := json.Unmarshal(body, &payload); err != nil || payload.ID == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "cron", "disable", payload.ID)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/cron/run", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload cronAction
+		if err := json.Unmarshal(body, &payload); err != nil || payload.ID == "" {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "cron", "run", payload.ID)...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+mux.HandleFunc("/api/cron/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		out := runCmd(bin, withProfile(profile, "cron", "list")...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
@@ -943,6 +1040,78 @@ func main() {
 		out := runCmd(bin, withProfile(profile, "pairing", "approve", payload.Channel, payload.Code)...)
 		writeJSON(w, map[string]string{"output": out})
 	}))
+
+    	mux.HandleFunc("/api/memory/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+    		category := r.URL.Query().Get("category")
+    		items, err := listMemoryFiles(category)
+    		if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+    		writeJSON(w, items)
+    	}))
+
+    	mux.HandleFunc("/api/memory/read", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+    		path := r.URL.Query().Get("path")
+    		full, err := safeWorkspacePath(path)
+    		if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+    		data, err := os.ReadFile(full)
+    		if err != nil {
+				http.Error(w, "failed to read file", http.StatusInternalServerError)
+				return
+			}
+    		writeJSON(w, map[string]string{"content": string(data)})
+    	}))
+
+    	mux.HandleFunc("/api/memory/write", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+    		if r.Method != http.MethodPost {
+				http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
+    		body, _ := io.ReadAll(r.Body)
+    		var payload struct { Path string `json:"path"`; Content string `json:"content"` }
+    		if err := json.Unmarshal(body, &payload); err != nil {
+				http.Error(w, "invalid json", http.StatusBadRequest)
+				return
+			}
+    		full, err := safeWorkspacePath(payload.Path)
+    		if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+    		if err := os.WriteFile(full, []byte(payload.Content), 0644); err != nil {
+				http.Error(w, "failed to write file", http.StatusInternalServerError)
+				return
+			}
+    		writeJSON(w, map[string]string{"status": "ok"})
+    	}))
+
+    	mux.HandleFunc("/api/memory/delete", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+    		if r.Method != http.MethodPost {
+				http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
+    		body, _ := io.ReadAll(r.Body)
+    		var payload struct { Path string `json:"path"` }
+    		if err := json.Unmarshal(body, &payload); err != nil {
+				http.Error(w, "invalid json", http.StatusBadRequest)
+				return
+			}
+    		full, err := safeWorkspacePath(payload.Path)
+    		if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+    		if err := os.Remove(full); err != nil {
+				http.Error(w, "failed to delete file", http.StatusInternalServerError)
+				return
+			}
+    		writeJSON(w, map[string]string{"status": "ok"})
+    	}))
+
 
 	mux.HandleFunc("/api/browser/extension", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -1300,6 +1469,67 @@ func skillsDirWorkspace() string {
 	return filepath.Join(expand(ws), "skills")
 }
 
+
+    func workspaceDir() string {
+    	return "/root/.openclaw/workspace"
+    }
+
+    func safeWorkspacePath(rel string) (string, error) {
+    	clean := filepath.Clean(rel)
+    	if clean == "." || clean == "" {
+    		return "", errors.New("path required")
+    	}
+    	if strings.HasPrefix(clean, "..") || strings.Contains(clean, ":") {
+    		return "", errors.New("invalid path")
+    	}
+    	base := workspaceDir()
+    	full := filepath.Join(base, clean)
+    	if !strings.HasPrefix(full, base) {
+    		return "", errors.New("invalid path")
+    	}
+    	return full, nil
+    }
+
+    func listMemoryFiles(category string) ([]string, error) {
+    	base := workspaceDir()
+    	var dir string
+    	switch category {
+    	case "memory":
+    		dir = filepath.Join(base, "memory")
+    	case "archive":
+    		dir = filepath.Join(base, "memory", "archive")
+    	case "core":
+    		files := []string{"AGENTS.md", "USER.md", "SOUL.md", "MEMORY.md", "TOOLS.md", "IDENTITY.md", "HEARTBEAT.md"}
+    		var out []string
+    		for _, f := range files {
+    			path := filepath.Join(base, f)
+    			if fileExists(path) {
+    				out = append(out, f)
+    			}
+    		}
+    		return out, nil
+    	default:
+    		return nil, errors.New("unknown category")
+    	}
+    	if !dirExists(dir) {
+    		return []string{}, nil
+    	}
+    	entries, err := os.ReadDir(dir)
+    	if err != nil {
+    		return nil, err
+    	}
+    	var out []string
+    	for _, e := range entries {
+    		if e.IsDir() {
+			continue
+		}
+    		name := e.Name()
+    		if strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".txt") || strings.HasSuffix(name, ".json") {
+    			out = append(out, filepath.Join(filepath.Base(dir), name))
+    		}
+    	}
+    	return out, nil
+    }
 func dataDir() string {
 	if v := os.Getenv("CLAWPANEL_DATA_DIR"); v != "" {
 		return expand(v)

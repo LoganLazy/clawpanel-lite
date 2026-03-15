@@ -56,138 +56,274 @@
     </div>
     <div class="layout">
       <aside class="sidebar">
-        <div class="sidebar-title">功能菜单</div>
+        <div class="sidebar-title">ClawPanel Lite</div>
         <button class="nav-item active" data-target="dashboard">仪表盘</button>
-        <button class="nav-item" data-target="config">配置</button>
-        <button class="nav-item" data-target="config-tools">配置工具</button>
-        <button class="nav-item" data-target="account">账号安全</button>
-        <button class="nav-item" data-target="system">系统概况</button>
-        <button class="nav-item" data-target="logs">日志</button>
-        <button class="nav-item" data-target="channels">渠道配置</button>
-        <button class="nav-item" data-target="channels-raw">渠道原始配置</button>
-        <button class="nav-item" data-target="backup">备份 / 恢复</button>
-        <button class="nav-item" data-target="pairing">配对</button>
-        <button class="nav-item" data-target="status">状态</button>
-        <button class="nav-item" data-target="cron-manage">Cron 管理</button>
-        <button class="nav-item" data-target="skills">技能</button>
-        <button class="nav-item" data-target="skills-common">常用技能</button>
+        <button class="nav-item" data-target="chat">实时聊天</button>
+        <button class="nav-item" data-target="models">模型配置</button>
+        <button class="nav-item" data-target="gateway">Gateway</button>
+        <button class="nav-item" data-target="memory">记忆文件</button>
+        <button class="nav-item" data-target="channels">消息渠道</button>
+        <button class="nav-item" data-target="cron">定时任务</button>
+        <button class="nav-item" data-target="skills">技能管理</button>
         <button class="nav-item" data-target="browser">浏览器</button>
-        <button class="nav-item" data-target="chat">聊天测试</button>
-        <button class="nav-item" data-target="cron-create">Cron 创建</button>
-        <button class="nav-item" data-target="config-path">配置文件</button>
+        <button class="nav-item" data-target="backup">备份恢复</button>
+        <button class="nav-item" data-target="logs">日志</button>
       </aside>
 
       <main class="content">
-                <section class="card glow section active" data-section="dashboard">
+        <section class="card glow section active" data-section="dashboard">
           <div class="section-title"><h2>仪表盘</h2><span class="muted">概览</span></div>
-          <p class="muted">核心状态概览</p>
           <div class="kv-grid">
-            <div class="kv">
-              <div class="label">OpenClaw</div>
-              <div id="dashOpenclaw" class="value">-</div>
-            </div>
-            <div class="kv">
-              <div class="label">更新状态</div>
-              <div id="updatePill" class="pill">未知</div>
-            </div>
-            <div class="kv">
-              <div class="label">Gateway</div>
-              <div id="dashGateway" class="value">-</div>
-            </div>
-            <div class="kv">
-              <div class="label">CPU/内存</div>
-              <div id="dashMem" class="value">-</div>
-            </div>
-            <div class="kv">
-              <div class="label">磁盘</div>
-              <div id="dashDisk" class="value">-</div>
-            </div>
+            <div class="kv"><div class="label">OpenClaw</div><div id="dashOpenclaw" class="value">-</div></div>
+            <div class="kv"><div class="label">Gateway</div><div id="dashGateway" class="value">-</div></div>
+            <div class="kv"><div class="label">CPU/内存</div><div id="dashMem" class="value">-</div></div>
+            <div class="kv"><div class="label">磁盘</div><div id="dashDisk" class="value">-</div></div>
           </div>
           <div class="actions">
-            <button class="secondary" onclick="refreshDashboard()">刷新仪表盘</button>
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="checkUpdates()">检查更新</button>
-            <button class="success" onclick="updateOpenClaw('normal')">更新 OpenClaw（官方）</button>
-            <button class="secondary" onclick="updateOpenClaw('cn')">更新 OpenClaw（CN）</button>
+            <button class="secondary" onclick="refreshDashboard()">刷新</button>
           </div>
           <pre id="dashOutput" class="status"></pre>
         </section>
 
-<section class="card section" data-section="config">
-          <div class="section-title"><h2>配置</h2><span class="muted">模型与 API</span></div>
-          <p class="muted">修改模型与 API 后可自动生效</p>
-          <div class="row">
-            <label>Model</label>
-            <input id="model" placeholder="anthropic/claude-sonnet-4-5" />
+        <section class="card section" data-section="chat">
+          <div class="section-title"><h2>实时聊天</h2><span class="muted">Gateway WS</span></div>
+          <div class="chat-layout">
+            <div class="chat-sidebar">
+              <div class="row">
+                <label>Gateway Host</label>
+                <input id="gwHost" placeholder="127.0.0.1:18789" />
+              </div>
+              <div class="row">
+                <label>Gateway Token</label>
+                <input id="gwToken" placeholder="token" />
+              </div>
+              <div class="actions">
+                <button class="secondary" onclick="connectGateway()">连接</button>
+                <button class="secondary" onclick="loadSessions()">刷新会话</button>
+              </div>
+              <div id="sessionList" class="session-list"></div>
+            </div>
+            <div class="chat-main">
+              <div id="chatMessages" class="chat-messages"></div>
+              <div class="chat-input">
+                <textarea id="chatInput" rows="3" placeholder="输入消息..."></textarea>
+                <div class="actions">
+                  <button class="secondary" onclick="abortChat()">停止生成</button>
+                  <button onclick="sendChat()">发送</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="row">
-            <label>Base URL</label>
-            <input id="baseUrl" placeholder="https://api.xxx.com/v1" />
-          </div>
-          <div class="row">
-            <label>API Key</label>
-            <input id="apiKey" placeholder="sk-..." autocomplete="off" autocapitalize="off" spellcheck="false" />
-          </div>
-          <div class="row">
-            <label>国产模板</label>
-            <select id="templateSelect"></select>
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="loadConfig()">刷新</button>
-            <button onclick="saveConfig()">保存</button>
-          </div>
-          <pre id="configStatus" class="status"></pre>
         </section>
 
-
-        <section class="card section" data-section="config-tools">
-          <div class="section-title"><h2>配置工具</h2><span class="muted">校验 / 导出</span></div>
-          <p class="muted">快速校验当前 openclaw 配置，并导出配置文件</p>
+        <section class="card section" data-section="models">
+          <div class="section-title"><h2>模型配置</h2><span class="muted">providers / models</span></div>
+          <p class="muted">基于 openclaw.json 的 models/providers 配置</p>
           <div class="actions">
-            <button class="secondary" onclick="validateConfig()">校验配置 (openclaw config validate)</button>
-            <a class="link-btn" href="/api/config/download" target="_blank">下载当前配置</a>
+            <button class="secondary" onclick="loadRawConfig()">加载配置</button>
+            <button onclick="saveRawConfig()">保存配置</button>
           </div>
-          <pre id="configToolsOutput" class="status"></pre>
+          <textarea id="configRaw" rows="12" placeholder="openclaw.json 原始配置"></textarea>
+          <pre id="configRawStatus" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="account">
-          <div class="section-title"><h2>账号安全</h2><span class="muted">修改面板密码</span></div>
-          <p class="muted">用户名固定为 admin，仅支持修改密码</p>
+        <section class="card section" data-section="gateway">
+          <div class="section-title"><h2>Gateway</h2><span class="muted">配置与控制</span></div>
           <div class="row">
-            <label>当前密码</label>
-            <input id="pwdOld" autocomplete="off" autocapitalize="off" spellcheck="false" type="password" placeholder="当前密码" />
+            <label>端口</label>
+            <input id="gwPort" placeholder="18789" />
           </div>
           <div class="row">
-            <label>新密码</label>
-            <input id="pwdNew" autocomplete="off" autocapitalize="off" spellcheck="false" type="password" placeholder="新密码" />
+            <label>绑定</label>
+            <select id="gwBind"><option value="loopback">仅本机</option><option value="lan">局域网</option></select>
           </div>
           <div class="row">
-            <label>确认新密码</label>
-            <input id="pwdNew2" autocomplete="off" autocapitalize="off" spellcheck="false" type="password" placeholder="确认新密码" />
+            <label>认证模式</label>
+            <select id="gwAuthMode"><option value="token">Token</option><option value="password">Password</option></select>
+          </div>
+          <div class="row">
+            <label>Token/Password</label>
+            <input id="gwAuthValue" placeholder="token 或 password" />
           </div>
           <div class="actions">
-            <button class="secondary" onclick="changePassword()">修改密码</button>
+            <button class="secondary" onclick="loadGateway()">加载</button>
+            <button onclick="saveGateway()">保存并重载</button>
           </div>
-          <pre id="pwdOutput" class="status"></pre>
+          <pre id="gwStatus" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="system">
-          <div class="section-title"><h2>系统概况</h2><span class="muted">系统状态</span></div>
-          <p class="muted">系统状态 / 资源概览</p>
-          <div class="actions">
-            <button class="secondary" onclick="loadSystem()">刷新系统</button>
+        <section class="card section" data-section="memory">
+          <div class="section-title"><h2>记忆文件</h2><span class="muted">workspace/memory</span></div>
+          <div class="row">
+            <label>分类</label>
+            <select id="memCategory">
+              <option value="memory">memory</option>
+              <option value="archive">archive</option>
+              <option value="core">core</option>
+            </select>
+            <button class="secondary" onclick="listMemory()">刷新</button>
           </div>
-          <pre id="systemOutput" class="status"></pre>
+          <div class="memory-layout">
+            <div class="memory-sidebar" id="memoryList"></div>
+            <div class="memory-editor">
+              <div class="row">
+                <label>当前文件</label>
+                <input id="memPath" placeholder="memory/2026-03-15.md" />
+              </div>
+              <textarea id="memContent" rows="12"></textarea>
+              <div class="actions">
+                <button class="secondary" onclick="readMemory()">读取</button>
+                <button onclick="writeMemory()">保存</button>
+                <button class="danger" onclick="deleteMemory()">删除</button>
+              </div>
+            </div>
+          </div>
+          <pre id="memStatus" class="status"></pre>
+        </section>
+
+        <section class="card section" data-section="channels">
+          <div class="section-title"><h2>消息渠道</h2><span class="muted">配置 + 配对</span></div>
+          <div class="row">
+            <label>Telegram Bot Token</label>
+            <input id="tgToken" placeholder="123:abc" />
+          </div>
+          <div class="row">
+            <label>Telegram AllowFrom</label>
+            <input id="tgAllow" placeholder="tg:123,tg:456" />
+          </div>
+          <hr class="sep" />
+          <div class="row">
+            <label>QQ App ID</label>
+            <input id="qqAppId" />
+          </div>
+          <div class="row">
+            <label>QQ App Key</label>
+            <input id="qqAppKey" />
+          </div>
+          <div class="row">
+            <label>QQ Bot Token</label>
+            <input id="qqBotToken" />
+          </div>
+          <div class="row">
+            <label>QQ AllowFrom</label>
+            <input id="qqAllow" />
+          </div>
+          <hr class="sep" />
+          <div class="row">
+            <label>Discord Bot Token</label>
+            <input id="dcToken" />
+          </div>
+          <div class="row">
+            <label>Discord Guild ID</label>
+            <input id="dcGuild" />
+          </div>
+          <div class="row">
+            <label>Discord User ID</label>
+            <input id="dcUser" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="loadChannels()">刷新</button>
+            <button onclick="saveChannels()">保存</button>
+          </div>
+          <div class="row">
+            <label>配对频道</label>
+            <select id="pairChannel"><option value="telegram">telegram</option><option value="discord">discord</option><option value="qq">qq</option></select>
+            <input id="pairCode" placeholder="配对码" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="listPairing()">查看待批准</button>
+            <button onclick="approvePairing()">批准配对</button>
+          </div>
+          <pre id="channelStatus" class="status"></pre>
+        </section>
+
+        <section class="card section" data-section="cron">
+          <div class="section-title"><h2>定时任务</h2><span class="muted">Cron</span></div>
+          <div class="actions">
+            <button onclick="cronStatus()">状态</button>
+            <button class="secondary" onclick="listCron()">刷新列表</button>
+          </div>
+          <div class="row">
+            <label>创建任务</label>
+            <input id="cronName" placeholder="panel-job" />
+            <input id="cronText" placeholder="提醒内容" />
+            <input id="cronMinutes" placeholder="30" />
+            <select id="cronMode"><option value="every">循环</option><option value="once">一次</option></select>
+            <button onclick="cronAdd()">创建</button>
+          </div>
+          <div class="row">
+            <label>任务列表</label>
+            <div id="cronList" class="status"></div>
+          </div>
+          <div class="row">
+            <label>任务 ID</label>
+            <input id="cronId" placeholder="job-id" />
+            <button class="secondary" onclick="cronRuns()">历史</button>
+            <button class="secondary" onclick="cronRunNow()">立即执行</button>
+            <button class="secondary" onclick="cronEnable()">启用</button>
+            <button class="secondary" onclick="cronDisable()">禁用</button>
+            <button class="danger" onclick="cronRemove()">删除</button>
+          </div>
+          <pre id="cronManage" class="status"></pre>
+        </section>
+
+        <section class="card section" data-section="skills">
+          <div class="section-title"><h2>技能管理</h2><span class="muted">Skills</span></div>
+          <div class="row">
+            <label>技能名</label>
+            <input id="skillName" placeholder="skill-id" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="listSkills()">列出</button>
+            <button onclick="checkSkills()">检测</button>
+            <button class="secondary" onclick="infoSkill()">详情</button>
+          </div>
+          <div class="row">
+            <label>本地技能</label>
+            <button class="secondary" onclick="listLocalSkills()">刷新本地技能</button>
+          </div>
+          <pre id="skillsLocal" class="status"></pre>
+          <div class="row">
+            <label>安装/更新/移除</label>
+            <input id="skillGit" placeholder="https://github.com/xxx/skill.git" />
+            <input id="skillInstallName" placeholder="技能名" />
+            <select id="skillTarget"><option value="managed">managed</option><option value="workspace">workspace</option></select>
+          </div>
+          <div class="actions">
+            <button onclick="installSkillLocal()">安装</button>
+            <button class="secondary" onclick="updateSkillLocal()">更新</button>
+            <button class="danger" onclick="removeSkillLocal()">移除</button>
+          </div>
+          <pre id="skillsOutput" class="status"></pre>
+        </section>
+
+        <section class="card section" data-section="browser">
+          <div class="section-title"><h2>浏览器</h2><span class="muted">扩展</span></div>
+          <div class="actions">
+            <button class="secondary" onclick="browserStatus()">状态</button>
+            <button class="secondary" onclick="browserStart()">启动</button>
+            <button class="secondary" onclick="browserStop()">停止</button>
+          </div>
+          <pre id="browserOutput" class="status"></pre>
+        </section>
+
+        <section class="card section" data-section="backup">
+          <div class="section-title"><h2>备份恢复</h2><span class="muted">配置保护</span></div>
+          <div class="row"><label>备份名称</label><input id="backupName" placeholder="auto-20260313" /></div>
+          <div class="actions">
+            <button onclick="createBackup()">创建</button>
+            <button class="secondary" onclick="listBackups()">查看</button>
+          </div>
+          <div class="row"><label>下载备份</label><input id="downloadName" placeholder="20260313-123000.json" /></div>
+          <div class="actions"><a id="backupDownloadLink" class="link-btn" href="#" onclick="downloadBackup(); return false;">下载备份</a></div>
+          <div class="row"><label>恢复备份</label><input id="restoreName" placeholder="20260313-123000.json" /></div>
+          <div class="actions"><button class="danger" onclick="restoreBackup()">恢复</button></div>
+          <pre id="backupOutput" class="status"></pre>
         </section>
 
         <section class="card section" data-section="logs">
           <div class="section-title"><h2>日志</h2><span class="muted">搜索 / 下载</span></div>
-          <p class="muted">关键字过滤 + 下载</p>
-          <div class="row">
-            <label>关键词</label>
-            <input id="logQuery" placeholder="error / warn" />
-          </div>
+          <div class="row"><label>关键词</label><input id="logQuery" placeholder="error / warn" /></div>
           <div class="actions">
             <button class="secondary" onclick="loadLogs()">刷新日志</button>
             <button onclick="searchLogs()">搜索</button>
@@ -203,296 +339,6 @@
           </div>
           <pre id="logsOutput" class="status"></pre>
         </section>
-
-        <section class="card section" data-section="channels">
-          <div class="section-title"><h2>渠道配置</h2><span class="muted">Telegram / QQ / Discord</span></div>
-          <p class="muted">Telegram / QQ / Discord 简易配置</p>
-          <div class="row">
-            <label>Telegram Bot Token</label>
-            <input id="tgToken" placeholder="123:abc" />
-          </div>
-          <div class="row">
-            <label>Telegram AllowFrom (逗号分隔)</label>
-            <input id="tgAllow" placeholder="tg:123,tg:456" />
-          </div>
-          <hr class="sep" />
-          <div class="row">
-            <label>QQ App ID</label>
-            <input id="qqAppId" placeholder="" />
-          </div>
-          <div class="row">
-            <label>QQ App Key</label>
-            <input id="qqAppKey" placeholder="" />
-          </div>
-          <div class="row">
-            <label>QQ Bot Token</label>
-            <input id="qqBotToken" placeholder="" />
-          </div>
-          <div class="row">
-            <label>QQ AllowFrom (逗号分隔)</label>
-            <input id="qqAllow" placeholder="qq:123,qq:456" />
-          </div>
-          <hr class="sep" />
-          <div class="row">
-            <label>Discord Bot Token</label>
-            <input id="dcToken" placeholder="" />
-          </div>
-          <div class="row">
-            <label>Discord Guild ID</label>
-            <input id="dcGuild" placeholder="" />
-          </div>
-          <div class="row">
-            <label>Discord User ID</label>
-            <input id="dcUser" placeholder="" />
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="loadChannels()">刷新</button>
-            <button onclick="saveChannels()">保存</button>
-          </div>
-          <pre id="channelStatus" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="channels-raw">
-          <div class="section-title"><h2>渠道原始配置</h2><span class="muted">高级 JSON</span></div>
-          <p class="muted">高级渠道配置（JSON）</p>
-          <textarea id="channelsRaw" rows="6" placeholder='{"discord":{...}}'></textarea>
-          <div class="actions">
-            <button class="secondary" onclick="loadChannelsRaw()">加载原始配置</button>
-            <button onclick="saveChannelsRaw()">保存原始配置</button>
-          </div>
-          <pre id="channelsRawStatus" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="backup">
-          <div class="section-title"><h2>备份 / 恢复</h2><span class="muted">配置保护</span></div>
-          <p class="muted">保护配置，快速回滚</p>
-          <div class="row">
-            <label>备份名称</label>
-            <input id="backupName" placeholder="auto-20260313" />
-          </div>
-          <div class="actions">
-            <button onclick="createBackup()">创建备份</button>
-            <button class="secondary" onclick="listBackups()">查看备份</button>
-          </div>
-          <div class="row">
-            <label>下载备份（文件名，可从列表复制）</label>
-            <input id="downloadName" placeholder="20260313-123000.json" />
-          </div>
-          <div class="actions">
-            <a id="backupDownloadLink" class="link-btn" href="#" onclick="downloadBackup(); return false;">下载备份</a>
-          </div>
-          <div class="row">
-            <label>恢复备份（文件名）</label>
-            <input id="restoreName" placeholder="20260313-123000.json" />
-          </div>
-          <div class="actions">
-            <button class="danger" onclick="restoreBackup()">恢复</button>
-          </div>
-          <pre id="backupOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="pairing">
-          <div class="section-title"><h2>配对</h2><span class="muted">批准连接</span></div>
-          <p class="muted">查看/批准配对码</p>
-          <div class="row">
-            <label>频道</label>
-            <select id="pairChannel">
-              <option value="telegram">telegram</option>
-              <option value="discord">discord</option>
-              <option value="qq">qq</option>
-            </select>
-          </div>
-          <div class="row">
-            <label>配对码</label>
-            <input id="pairCode" placeholder="123456" />
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="listPairing()">查看待批准</button>
-            <button onclick="approvePairing()">批准配对</button>
-          </div>
-          <pre id="pairOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="status">
-          <div class="section-title"><h2>状态</h2><span class="muted">服务健康</span></div>
-          <p class="muted">查看 OpenClaw / Gateway 状态</p>
-          <div class="row" id="statusPills">
-            <div class="pill" id="openclawPill">OpenClaw: 未知</div>
-            <div class="pill" id="gatewayPill">Gateway: 未知</div>
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="refreshStatus()">刷新状态</button>
-            <button class="danger" onclick="restartGateway()">重启 Gateway</button>
-          </div>
-          <pre id="statusOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="cron-manage">
-          <div class="section-title"><h2>Cron 管理</h2><span class="muted">任务列表</span></div>
-          <p class="muted">列表 / 删除 / 运行历史</p>
-          <div class="actions">
-            <button class="secondary" onclick="listCron()">列出任务</button>
-          </div>
-          <div class="row">
-            <label>任务 ID</label>
-            <input id="cronId" placeholder="job-id" />
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="cronRuns()">查看历史</button>
-            <button class="danger" onclick="cronRemove()">删除任务</button>
-          </div>
-          <pre id="cronManage" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="skills">
-          <div class="section-title"><h2>技能</h2><span class="muted">管理</span></div>
-          <p class="muted">列出/检测技能 + 本地安装管理</p>
-          <div class="row">
-            <label>技能名（info 可选）</label>
-            <input id="skillName" placeholder="skill-id" />
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="listSkills()">列出技能</button>
-            <button onclick="checkSkills()">检测依赖</button>
-            <button class="secondary" onclick="infoSkill()">详情 info</button>
-          </div>
-          <div class="row">
-            <label>本地技能清单</label>
-            <button class="secondary" onclick="listLocalSkills()">刷新本地技能</button>
-          </div>
-          <pre id="skillsLocal" class="status"></pre>
-          <div class="row">
-            <label>安装/更新/移除技能</label>
-            <input id="skillGit" placeholder="https://github.com/xxx/skill.git" />
-            <input id="skillInstallName" placeholder="可选：技能名" />
-            <select id="skillTarget">
-              <option value="managed">managed (~/.openclaw/skills)</option>
-              <option value="workspace">workspace (workspace/skills)</option>
-            </select>
-          </div>
-          <div class="actions">
-            <button onclick="installSkillLocal()">安装</button>
-            <button class="secondary" onclick="updateSkillLocal()">更新</button>
-            <button class="danger" onclick="removeSkillLocal()">移除</button>
-          </div>
-          <pre id="skillsOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="skills-common">
-          <div class="section-title"><h2>常用技能</h2><span class="muted">一键安装</span></div>
-          <p class="muted">可在面板内编辑常用技能列表</p>
-          <div class="actions">
-            <button class="secondary" onclick="loadCommonSkills()">加载列表</button>
-            <button class="secondary" onclick="importCommonSkillsSample()">导入示例</button>
-            <button onclick="saveCommonSkills()">保存列表</button>
-          </div>
-          <textarea id="commonSkills" rows="6" placeholder='[{"name":"skill-a","gitUrl":"https://...","target":"managed"}]'></textarea>
-          <div class="row">
-            <label>安装某个常用技能（按 name）</label>
-            <input id="commonSkillName" placeholder="skill-a" />
-          </div>
-          <div class="actions">
-            <button onclick="installCommonSkill()">一键安装</button>
-          </div>
-          <pre id="commonSkillsOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="browser">
-          <div class="section-title"><h2>浏览器</h2><span class="muted">状态 / 插件</span></div>
-          <p class="muted">浏览器状态与插件</p>
-          <div class="actions">
-            <button class="secondary" onclick="browserStatus()">状态</button>
-            <button onclick="browserStart()">启动</button>
-            <button class="danger" onclick="browserStop()">停止</button>
-          </div>
-          <div class="row">
-            <label>打开 URL</label>
-            <input id="browserUrl" placeholder="https://example.com" />
-          </div>
-          <div class="actions">
-            <button onclick="browserOpen()">打开</button>
-          </div>
-          <div class="row">
-            <label>截图路径</label>
-            <input id="shotPath" placeholder="/tmp/openclaw_screenshot.png" />
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="browserShot()">截图</button>
-          </div>
-          <div class="actions">
-            <button onclick="installExtension()">安装 Chrome 插件</button>
-            <button class="secondary" onclick="extensionPath()">插件路径</button>
-          </div>
-          <pre id="extOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="chat">
-          <div class="section-title"><h2>聊天测试</h2><span class="muted">API 诊断</span></div>
-          <p class="muted">发送一条测试消息（默认模型）</p>
-          <textarea id="chatMsg" rows="4" placeholder="输入消息..."></textarea>
-          <div class="row">
-            <label>Model (可选)</label>
-            <input id="chatModel" placeholder="留空则默认" />
-          </div>
-          <div class="actions">
-            <button class="success" onclick="sendChat()">发送</button>
-            <button class="secondary" onclick="testChat()">测试 API</button>
-          </div>
-          <div class="row">
-            <label>延迟（ms）</label>
-            <input id="chatLatency" readonly />
-          </div>
-          <div class="row">
-            <label>平均延迟（最近 5 次）</label>
-            <input id="chatLatencyAvg" readonly />
-          </div>
-          <div class="row">
-            <label>API 状态</label>
-            <div id="chatStatus" class="pill">未知</div>
-          </div>
-          <pre id="chatOutput" class="status"></pre>
-        </section>
-
-        <section class="card section" data-section="cron-create">
-          <div class="section-title"><h2>Cron 创建</h2><span class="muted">快速任务</span></div>
-          <p class="muted">快速创建运维任务</p>
-          <div class="row">
-            <label>任务名称</label>
-            <input id="cronName" placeholder="panel-job" />
-          </div>
-          <div class="row">
-            <label>内容</label>
-            <textarea id="cronText" rows="3" placeholder="例如：每30分钟检查网关状态"></textarea>
-          </div>
-          <div class="row">
-            <label>间隔分钟</label>
-            <input id="cronMinutes" placeholder="30" />
-          </div>
-          <div class="row">
-            <label>模式</label>
-            <select id="cronMode">
-              <option value="every">循环执行</option>
-              <option value="once">一次性</option>
-            </select>
-          </div>
-          <div class="actions">
-            <button onclick="addCron()">创建任务</button>
-          </div>
-          <pre id="cronOutput" class="status"></pre>
-        </section>
-
-        
-      
-        <section class="card section" data-section="config-path">
-          <div class="section-title"><h2>配置文件</h2><span class="muted">路径 / 导出</span></div>
-          <p class="muted">查看当前探测到的 OpenClaw 配置文件路径</p>
-          <div class="actions">
-            <button class="secondary" onclick="detectConfig()">刷新探测</button>
-            <a class="link-btn" href="/api/config/download" target="_blank">下载配置</a>
-          </div>
-          <pre id="configPath" class="status"></pre>
-        </section>
-
       </main>
     </div>
   </div>
@@ -500,271 +346,194 @@
   <footer class="muted">ClawPanel Lite · Minimal Web UI</footer>
 
   <script>
-            let latencyBuffer = [];
-    let logTimer = null;
-let installBusy = false;
+    const state = {
+      gateway: { connected: false, ws: null, sessionKey: null },
+      currentSession: null,
+      chatRuns: {},
+    };
 
-function setActiveSection(name) {
-      document.querySelectorAll('.section').forEach((el) => {
-        el.classList.toggle('active', el.dataset.section === name);
-      });
-      document.querySelectorAll('.nav-item').forEach((el) => {
-        el.classList.toggle('active', el.dataset.target === name);
-      });
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelector(`[data-section="${id}"]`).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-target="${id}"]`).classList.add('active');
     }
 
-    async function checkInitFlow() {
-      const overlay = document.getElementById('initOverlay');
-      if (!overlay) return;
-      try {
-        const r = await fetch('/api/init/status');
-        if (!r.ok) return;
-        const data = await r.json();
-        if (!data.openclawInstalled || !data.configFound) {
-          overlay.classList.remove('hidden');
-        }
-      } catch (e) {}
-    }
-
-    async function initInstall() {
-      const btn = document.getElementById('initInstallBtn');
-      if (btn) btn.disabled = true;
-      const version = document.getElementById('initInstallVersion')?.value || 'normal';
-      document.getElementById('initInstallOutput').textContent = '安装中...';
-      try {
-        const r = await fetch('/api/install', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ version })
-        });
-        const data = await r.json();
-        document.getElementById('initInstallOutput').textContent = JSON.stringify(data, null, 2);
-        const outText = (data.output || '').toLowerCase();
-        if (outText.includes('installed successfully')) {
-          document.getElementById('initConfigOutput').textContent = '安装完成，请填写配置';
-          document.getElementById('initModel').focus();
-        }
-      } catch (e) {
-        document.getElementById('initInstallOutput').textContent = '安装失败，请重试';
-      } finally {
-        if (btn) btn.disabled = false;
-      }
-    }
-
-    async function initSaveConfig() {
-      const payload = {
-        model: document.getElementById('initModel').value,
-        baseUrl: document.getElementById('initBaseUrl').value,
-        apiKey: document.getElementById('initApiKey').value,
-      };
-      document.getElementById('initConfigOutput').textContent = '保存中...';
-      try {
-        const r = await fetch('/api/init/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!r.ok) {
-          const err = await r.text();
-          document.getElementById('initConfigOutput').textContent = err || '保存失败';
-          return;
-        }
-        document.getElementById('initConfigOutput').textContent = '保存成功，即将进入面板...';
-        setTimeout(() => window.location.reload(), 800);
-      } catch (e) {
-        document.getElementById('initConfigOutput').textContent = '保存失败';
-      }
-    }
-
-    document.querySelectorAll('.nav-item').forEach((btn) => {
-      btn.addEventListener('click', () => setActiveSection(btn.dataset.target));
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.onclick = () => showSection(btn.dataset.target);
     });
 
-    checkInitFlow();
-    refreshDashboard();
+    async function jsonFetch(url, opts={}) {
+      const res = await fetch(url, opts);
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
 
     async function refreshDashboard() {
-      const status = await fetch('/api/status').then(r => r.json());
-      const sys = await fetch('/api/system').then(r => r.json());
-      document.getElementById('dashOpenclaw').textContent = (status.openclaw || '').split('\n')[0] || 'unknown';
-      document.getElementById('dashGateway').textContent = (status.gateway || '').split('\n')[0] || 'unknown';
-      const memLine = (sys.mem || '').split('\n')[1] || (sys.mem || '').split('\n')[0] || '';
-      document.getElementById('dashMem').textContent = memLine || 'unknown';
-      const diskLine = (sys.disk || '').split('\n')[1] || (sys.disk || '').split('\n')[0] || '';
-      document.getElementById('dashDisk').textContent = diskLine || 'unknown';
-      document.getElementById('dashOutput').textContent = '已刷新';
-      await checkUpdates();
+      const data = await jsonFetch('/api/system');
+      document.getElementById('dashMem').textContent = data.memory || '-';
+      document.getElementById('dashDisk').textContent = data.disk || '-';
+      const st = await jsonFetch('/api/status');
+      const firstLine = (val) => (val || '').toString().split(/\n/)[0] || '-';
+      document.getElementById('dashOpenclaw').textContent = firstLine(st.openclaw);
+      document.getElementById('dashGateway').textContent = firstLine(st.gateway);
+      document.getElementById('dashOutput').textContent = JSON.stringify({system:data, status:st}, null, 2);
     }
 
-    async function checkUpdates() {
-      const pill = document.getElementById('updatePill');
-      if (!pill) return;
-      pill.textContent = '检查中...';
-      pill.classList.remove('ok', 'warn', 'fail');
-      try {
-        const r = await fetch('/api/openclaw/update/check');
-        if (!r.ok) {
-          pill.textContent = '检查失败';
-          pill.classList.add('fail');
-          return;
-        }
-        const data = await r.json();
-        if (!data.installed) {
-          pill.textContent = '未安装';
-          pill.classList.add('fail');
-          return;
-        }
-        if (data.hasUpdate) {
-          pill.textContent = `有新版本：${data.latest} → 点击更新`;
-          pill.classList.add('warn');
-        } else {
-          pill.textContent = '已是最新';
-          pill.classList.add('ok');
-        }
-      } catch (e) {
-        pill.textContent = '检查失败';
-        pill.classList.add('fail');
-      }
+    // ===== Chat (WS) =====
+    function connectGateway() {
+      const host = document.getElementById('gwHost').value || '127.0.0.1:18789';
+      const token = document.getElementById('gwToken').value || '';
+      const ws = new WebSocket(`ws://${host}/ws?token=${encodeURIComponent(token)}`);
+      state.gateway.ws = ws;
+      ws.onopen = () => appendSystemMsg('已连接 Gateway');
+      ws.onmessage = (evt) => handleWsMessage(evt.data);
+      ws.onclose = () => appendSystemMsg('Gateway 已断开');
     }
 
-    async function changePassword() {
-      const oldPass = document.getElementById('pwdOld').value;
-      const newPass = document.getElementById('pwdNew').value;
-      const newPass2 = document.getElementById('pwdNew2').value;
-      const outEl = document.getElementById('pwdOutput');
-      if (!oldPass || !newPass) {
-        outEl.textContent = '请输入当前密码和新密码';
+    function handleWsMessage(raw) {
+      let msg = null;
+      try { msg = JSON.parse(raw); } catch { return; }
+      if (msg.type === 'event' && msg.event === 'connect.challenge') {
+        // 简化：不做签名，直接跳过
         return;
       }
-      if (newPass !== newPass2) {
-        outEl.textContent = '两次新密码不一致';
-        return;
+      if (msg.type === 'event' && msg.event === 'chat.delta') {
+        const runId = msg.payload?.runId || 'run';
+        appendDelta(runId, msg.payload?.delta || '');
       }
-      outEl.textContent = '保存中...';
-      try {
-        const r = await fetch('/api/account/password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ oldPass, newPass })
-        });
-        if (!r.ok) {
-          const err = await r.text();
-          outEl.textContent = err || '修改失败';
-          return;
-        }
-        outEl.textContent = '修改成功，请重新登录';
-        setTimeout(() => { window.location.href = '/logout'; }, 800);
-      } catch (e) {
-        outEl.textContent = '修改失败';
+      if (msg.type === 'event' && msg.event === 'chat.message') {
+        appendAssistant(msg.payload?.message || '');
       }
     }
 
-    async function updateOpenClaw(version) {
-      if (!confirm('确定要更新 OpenClaw 吗？更新会覆盖到最新版本。')) {
-        return;
-      }
-      const outEl = document.getElementById('dashOutput');
-      if (outEl) outEl.textContent = '更新中...';
-      try {
-        const r = await fetch('/api/openclaw/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ version })
-        });
-        const data = await r.json();
-        if (outEl) outEl.textContent = data.output || '更新完成';
-        await checkUpdates();
-      } catch (e) {
-        if (outEl) outEl.textContent = '更新失败';
-      }
+    function appendSystemMsg(text) {
+      const box = document.getElementById('chatMessages');
+      const el = document.createElement('div');
+      el.className = 'chat-msg system';
+      el.textContent = text;
+      box.appendChild(el);
+      box.scrollTop = box.scrollHeight;
     }
 
+    function appendUser(text) {
+      const box = document.getElementById('chatMessages');
+      const el = document.createElement('div');
+      el.className = 'chat-msg user';
+      el.textContent = text;
+      box.appendChild(el);
+      box.scrollTop = box.scrollHeight;
+    }
 
-    async function validateConfig() {
-      const outEl = document.getElementById('configToolsOutput');
-      if (outEl) outEl.textContent = '校验中...';
-      try {
-        const r = await fetch('/api/config/validate');
-        const data = await r.json();
-        if (outEl) outEl.textContent = data.output || '';
-      } catch (e) {
-        if (outEl) outEl.textContent = '校验失败';
+    function appendAssistant(text) {
+      const box = document.getElementById('chatMessages');
+      const el = document.createElement('div');
+      el.className = 'chat-msg assistant';
+      el.textContent = text;
+      box.appendChild(el);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function appendDelta(runId, delta) {
+      let el = document.getElementById('run-' + runId);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'chat-msg assistant';
+        el.id = 'run-' + runId;
+        el.textContent = '';
+        document.getElementById('chatMessages').appendChild(el);
       }
+      el.textContent += delta;
     }
 
-    async function detectConfig() {
-      const r = await fetch('/api/config/status');
-      const data = await r.json();
-      document.getElementById('configPath').textContent = JSON.stringify(data, null, 2);
+    async function sendChat() {
+      const text = document.getElementById('chatInput').value.trim();
+      if (!text) return;
+      appendUser(text);
+      document.getElementById('chatInput').value = '';
+      // fallback to HTTP chat
+      const data = await jsonFetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text})});
+      appendAssistant(data.output || '');
     }
 
-    async function loadConfig() {
-      const r = await fetch('/api/config/get');
-      if (!r.ok) {
-        document.getElementById('configStatus').textContent = '读取失败';
-        return;
-      }
-      const data = await r.json();
-      document.getElementById('model').value = data.model || '';
-      document.getElementById('baseUrl').value = data.baseUrl || '';
-      document.getElementById('apiKey').value = data.apiKey || '';
-      document.getElementById('configStatus').textContent = '已加载';
+    function abortChat() {
+      appendSystemMsg('停止生成（占位）');
     }
 
-    async function saveConfig() {
-      const payload = {
-        model: document.getElementById('model').value,
-        baseUrl: document.getElementById('baseUrl').value,
-        apiKey: document.getElementById('apiKey').value,
-      };
-      const r = await fetch('/api/config/set', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    function loadSessions() {
+      document.getElementById('sessionList').textContent = '暂不支持会话列表（轻量版）';
+    }
+
+    // ===== Models (raw config) =====
+    async function loadRawConfig() {
+      const data = await jsonFetch('/api/config/raw');
+      document.getElementById('configRaw').value = JSON.stringify(data, null, 2);
+    }
+    async function saveRawConfig() {
+      const raw = document.getElementById('configRaw').value;
+      const data = JSON.parse(raw);
+      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
+      document.getElementById('configRawStatus').textContent = '已保存';
+    }
+
+    // ===== Gateway =====
+    async function loadGateway() {
+      const data = await jsonFetch('/api/config/raw');
+      const gw = data.gateway || {};
+      document.getElementById('gwPort').value = gw.port || 18789;
+      document.getElementById('gwBind').value = gw.bind || 'loopback';
+      document.getElementById('gwAuthMode').value = gw.auth?.mode || 'token';
+      document.getElementById('gwAuthValue').value = gw.auth?.token || gw.auth?.password || '';
+    }
+    async function saveGateway() {
+      const data = await jsonFetch('/api/config/raw');
+      data.gateway = data.gateway || {};
+      data.gateway.port = parseInt(document.getElementById('gwPort').value) || 18789;
+      data.gateway.bind = document.getElementById('gwBind').value;
+      const mode = document.getElementById('gwAuthMode').value;
+      const val = document.getElementById('gwAuthValue').value || '';
+      data.gateway.auth = mode === 'password' ? {mode:'password', password: val} : (val ? {mode:'token', token: val} : {});
+      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
+      await jsonFetch('/api/gateway/restart', {method:'POST'});
+      document.getElementById('gwStatus').textContent = '已保存并重启';
+    }
+
+    // ===== Memory =====
+    async function listMemory() {
+      const cat = document.getElementById('memCategory').value;
+      const data = await jsonFetch(`/api/memory/list?category=${encodeURIComponent(cat)}`);
+      const list = document.getElementById('memoryList');
+      list.innerHTML = '';
+      data.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.textContent = p;
+        item.onclick = () => { document.getElementById('memPath').value = p; readMemory(); };
+        list.appendChild(item);
       });
-      const out = await r.text();
-      document.getElementById('configStatus').textContent = out;
+    }
+    async function readMemory() {
+      const path = document.getElementById('memPath').value;
+      const data = await jsonFetch(`/api/memory/read?path=${encodeURIComponent(path)}`);
+      document.getElementById('memContent').value = data.content || '';
+    }
+    async function writeMemory() {
+      const path = document.getElementById('memPath').value;
+      const content = document.getElementById('memContent').value;
+      await jsonFetch('/api/memory/write', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path, content})});
+      document.getElementById('memStatus').textContent = '已保存';
+      listMemory();
+    }
+    async function deleteMemory() {
+      const path = document.getElementById('memPath').value;
+      await jsonFetch('/api/memory/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path})});
+      document.getElementById('memStatus').textContent = '已删除';
+      listMemory();
     }
 
-    async function loadSystem() {
-      const r = await fetch('/api/system');
-      const data = await r.json();
-      document.getElementById('systemOutput').textContent =
-        (data.uname || '') + '\n' + (data.uptime || '') + '\n' + (data.disk || '') + '\n' + (data.mem || '');
-    }
-
-        function setLogAuto() {
-      const interval = parseInt(document.getElementById('logAutoInterval').value || '0', 10);
-      if (logTimer) clearInterval(logTimer);
-      if (interval > 0) {
-        logTimer = setInterval(loadLogs, interval);
-      }
-    }
-
-async function loadLogs() {
-      const r = await fetch('/api/logs');
-      const data = await r.json();
-      document.getElementById('logsOutput').textContent = data.output || '';
-    }
-
-    async function searchLogs() {
-      const payload = { query: document.getElementById('logQuery').value };
-      const r = await fetch('/api/logs/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      document.getElementById('logsOutput').textContent = data.output || '';
-    }
-
+    // ===== Channels =====
     async function loadChannels() {
-      const r = await fetch('/api/channels/get');
-      if (!r.ok) {
-        document.getElementById('channelStatus').textContent = '读取失败';
-        return;
-      }
-      const data = await r.json();
+      const data = await jsonFetch('/api/channels/get');
       document.getElementById('tgToken').value = data.telegramToken || '';
       document.getElementById('tgAllow').value = data.telegramAllow || '';
       document.getElementById('qqAppId').value = data.qqAppId || '';
@@ -774,9 +543,7 @@ async function loadLogs() {
       document.getElementById('dcToken').value = data.discordToken || '';
       document.getElementById('dcGuild').value = data.discordGuild || '';
       document.getElementById('dcUser').value = data.discordUser || '';
-      document.getElementById('channelStatus').textContent = '已加载';
     }
-
     async function saveChannels() {
       const payload = {
         telegramToken: document.getElementById('tgToken').value,
@@ -789,470 +556,164 @@ async function loadLogs() {
         discordGuild: document.getElementById('dcGuild').value,
         discordUser: document.getElementById('dcUser').value,
       };
-      const r = await fetch('/api/channels/set', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('channelStatus').textContent = out;
-    }
-
-    async function loadChannelsRaw() {
-      const r = await fetch('/api/channels/raw/get');
-      const data = await r.json();
-      document.getElementById('channelsRaw').value = data.raw || '{}';
-      document.getElementById('channelsRawStatus').textContent = '已加载';
-    }
-
-    async function saveChannelsRaw() {
-      const payload = { raw: document.getElementById('channelsRaw').value };
-      const r = await fetch('/api/channels/raw/set', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('channelsRawStatus').textContent = out;
-    }
-
-    function downloadBackup() {
-      const name = document.getElementById('downloadName').value;
-      if (!name) {
-        document.getElementById('backupOutput').textContent = '请输入备份文件名';
-        return;
-      }
-      const link = document.getElementById('backupDownloadLink');
-      link.href = '/api/backups/download?name=' + encodeURIComponent(name);
-      link.click();
-    }
-
-    async function createBackup() {
-      const payload = { name: document.getElementById('backupName').value };
-      const r = await fetch('/api/backups/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('backupOutput').textContent = out;
-    }
-
-        async function listBackups() {
-      const r = await fetch('/api/backups/list');
-      const data = await r.json();
-      if (!Array.isArray(data) || data.length === 0) {
-        document.getElementById('backupOutput').textContent = '暂无备份';
-        return;
-      }
-      const lines = data.map((name) => `- ${name}`);
-      document.getElementById('backupOutput').textContent = lines.join("\n");
-    }
-
-    async function restoreBackup() {
-      const payload = { name: document.getElementById('restoreName').value };
-      const r = await fetch('/api/backups/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('backupOutput').textContent = out;
+      const res = await jsonFetch('/api/channels/set', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      document.getElementById('channelStatus').textContent = res.status || 'ok';
     }
 
     async function listPairing() {
-      const ch = document.getElementById('pairChannel').value;
-      const r = await fetch('/api/pairing/list?channel=' + encodeURIComponent(ch));
-      const data = await r.json();
-      document.getElementById('pairOutput').textContent = data.output || '';
+      const channel = document.getElementById('pairChannel').value;
+      const data = await jsonFetch(`/api/pairing/list?channel=${encodeURIComponent(channel)}`);
+      document.getElementById('channelStatus').textContent = JSON.stringify(data, null, 2);
     }
-
     async function approvePairing() {
-      const payload = {
-        channel: document.getElementById('pairChannel').value,
-        code: document.getElementById('pairCode').value,
-      };
-      const r = await fetch('/api/pairing/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      document.getElementById('pairOutput').textContent = data.output || '';
-    }
-    async function refreshStatus() {
-      const data = await loadStatus();
-      if (!data) return;
-      document.getElementById('dashOpenclaw').textContent = (data.openclaw || '').split("\n")[0] || 'unknown';
-      document.getElementById('dashGateway').textContent = (data.gateway || '').split("\n")[0] || 'unknown';
+      const channel = document.getElementById('pairChannel').value;
+      const code = document.getElementById('pairCode').value;
+      const res = await jsonFetch('/api/pairing/approve', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({channel, code})});
+      document.getElementById('channelStatus').textContent = res.output || 'ok';
     }
 
-    async function loadStatus() {
-      const r = await fetch('/api/status');
-      const data = await r.json();
-      document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
-      const openclawOk = (data.openclaw || '').toLowerCase().includes('running');
-      const gatewayOk = (data.gateway || '').toLowerCase().includes('running');
-      const openPill = document.getElementById('openclawPill');
-      const gatePill = document.getElementById('gatewayPill');
-      if (openPill) {
-        openPill.textContent = openclawOk ? 'OpenClaw: 运行中' : 'OpenClaw: 未知';
-        openPill.classList.toggle('ok', openclawOk);
-        openPill.classList.toggle('fail', !openclawOk);
-      }
-      if (gatePill) {
-        gatePill.textContent = gatewayOk ? 'Gateway: 运行中' : 'Gateway: 未知';
-        gatePill.classList.toggle('ok', gatewayOk);
-        gatePill.classList.toggle('fail', !gatewayOk);
-      }
-      return data;
-    }
-
-    async function listCron() {
-      const r = await fetch('/api/cron/list');
-      const data = await r.json();
-      document.getElementById('cronManage').textContent = data.output || '';
-    }
-
-    async function restartGateway() {
-      const outEl = document.getElementById('statusOutput');
-      if (!confirm('确定要重启 Gateway 吗？')) return;
-      if (outEl) outEl.textContent = '重启中...';
-      try {
-        const r = await fetch('/api/gateway/restart', { method: 'POST' });
-        const data = await r.json();
-        if (outEl) outEl.textContent = (data.output || JSON.stringify(data, null, 2));
-      } catch (e) {
-        if (outEl) outEl.textContent = '重启失败';
-      }
-      try { await loadStatus(); } catch (e) {}
-    }
-
-
-    async function cronRuns() {
-      const id = document.getElementById('cronId').value;
-      const r = await fetch('/api/cron/runs?id=' + encodeURIComponent(id));
-      const data = await r.json();
-      document.getElementById('cronManage').textContent = data.output || '';
-    }
-
-    async function cronRemove() {
-      const payload = { id: document.getElementById('cronId').value };
-      const r = await fetch('/api/cron/rm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      document.getElementById('cronManage').textContent = data.output || '';
-    }
-
-    async function sendChat() {
-      const payload = {
-        message: document.getElementById('chatMsg').value,
-        model: document.getElementById('chatModel').value,
-      };
-      const r = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      document.getElementById('chatOutput').textContent = JSON.stringify(data, null, 2);
-    }
-
-        async function testChat() {
-      const payload = {
-        message: document.getElementById('chatMsg').value || '你好',
-        model: document.getElementById('chatModel').value,
-      };
-      const start = Date.now();
-      const r = await fetch('/api/chat/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      const latency = data.latencyMs || (Date.now() - start);
-      document.getElementById('chatLatency').value = latency;
-      latencyBuffer = [latency, ...latencyBuffer].slice(0, 5);
-      const avg = Math.round(latencyBuffer.reduce((a, b) => a + b, 0) / latencyBuffer.length);
-      document.getElementById('chatLatencyAvg').value = avg;
-      const statusEl = document.getElementById('chatStatus');
-      if (data.ok) {
-        statusEl.textContent = '正常';
-        statusEl.classList.remove('fail');
-        statusEl.classList.add('ok');
-      } else {
-        statusEl.textContent = '异常';
-        statusEl.classList.remove('ok');
-        statusEl.classList.add('fail');
-      }
-      document.getElementById('chatOutput').textContent = JSON.stringify(data, null, 2);
-    }
-
-async function installOpenClaw() {
-      if (installBusy) {
-        document.getElementById('dashOutput').textContent = '正在安装中，请稍候...';
-        return;
-      }
-      installBusy = true;
-      const btn = document.getElementById('installBtn');
-      if (btn) btn.disabled = true;
-      const version = (document.getElementById('installVersion'))?.value || 'normal';
-      document.getElementById('dashOutput').textContent = '安装中...';
-      document.getElementById('installOutput').textContent = '安装中...';
-      try {
-        const r = await fetch('/api/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version }) });
-        const data = await r.json();
-        document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
-        document.getElementById('dashOutput').textContent = data.output || '安装完成';
-      } catch (e) {
-        document.getElementById('dashOutput').textContent = '安装失败，请重试';
-      } finally {
-        installBusy = false;
-        if (btn) btn.disabled = false;
-      }
-    }
-
-    async function addCron() {
+    // ===== Cron =====
+    async function cronAdd() {
       const payload = {
         jobName: document.getElementById('cronName').value,
         text: document.getElementById('cronText').value,
-        minutes: parseInt(document.getElementById('cronMinutes').value || '30', 10),
+        minutes: parseInt(document.getElementById('cronMinutes').value || '30'),
         mode: document.getElementById('cronMode').value,
       };
-      const r = await fetch('/api/cron/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      document.getElementById('cronOutput').textContent = JSON.stringify(data, null, 2);
+      const res = await jsonFetch('/api/cron/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+    async function listCron() {
+      const res = await jsonFetch('/api/cron/list');
+      const out = res.output || '';
+      document.getElementById('cronManage').textContent = out;
+      document.getElementById('cronList').textContent = out;
+    }
+    async function cronRuns() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch(`/api/cron/runs?id=${encodeURIComponent(id)}`);
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+    async function cronRemove() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch('/api/cron/rm', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+      document.getElementById('cronManage').textContent = res.output || '';
     }
 
+    // ===== Skills =====
     async function listSkills() {
-      const r = await fetch('/api/skills', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'list' })
-      });
-      const data = await r.json();
-      document.getElementById('skillsOutput').textContent = data.output || '';
+      const res = await jsonFetch('/api/skills', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'list'})});
+      document.getElementById('skillsOutput').textContent = res.output || '';
     }
-
     async function checkSkills() {
-      const r = await fetch('/api/skills', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'check' })
-      });
-      const data = await r.json();
-      document.getElementById('skillsOutput').textContent = data.output || '';
+      const res = await jsonFetch('/api/skills', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'check'})});
+      document.getElementById('skillsOutput').textContent = res.output || '';
     }
-
     async function infoSkill() {
-      const skill = document.getElementById('skillName').value;
-      const r = await fetch('/api/skills', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'info', skill })
-      });
-      const data = await r.json();
-      document.getElementById('skillsOutput').textContent = data.output || '';
+      const res = await jsonFetch('/api/skills', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'info', skill: document.getElementById('skillName').value})});
+      document.getElementById('skillsOutput').textContent = res.output || '';
     }
-
     async function listLocalSkills() {
-      const r = await fetch('/api/skills/local/list');
-      const data = await r.json();
+      const data = await jsonFetch('/api/skills/local/list');
       document.getElementById('skillsLocal').textContent = JSON.stringify(data, null, 2);
     }
-
     async function installSkillLocal() {
-      const payload = {
-        gitUrl: document.getElementById('skillGit').value,
-        name: document.getElementById('skillInstallName').value,
-        target: document.getElementById('skillTarget').value,
-      };
-      const r = await fetch('/api/skills/local/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('skillsOutput').textContent = out;
+      const payload = {git: document.getElementById('skillGit').value, name: document.getElementById('skillInstallName').value, target: document.getElementById('skillTarget').value};
+      await jsonFetch('/api/skills/local/install', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      document.getElementById('skillsOutput').textContent = '已安装';
+      listLocalSkills();
     }
-
     async function updateSkillLocal() {
-      const payload = {
-        name: document.getElementById('skillInstallName').value,
-        target: document.getElementById('skillTarget').value,
-      };
-      const r = await fetch('/api/skills/local/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('skillsOutput').textContent = out;
+      const payload = {name: document.getElementById('skillInstallName').value, target: document.getElementById('skillTarget').value};
+      await jsonFetch('/api/skills/local/update', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      document.getElementById('skillsOutput').textContent = '已更新';
+      listLocalSkills();
     }
-
     async function removeSkillLocal() {
-      const payload = {
-        name: document.getElementById('skillInstallName').value,
-        target: document.getElementById('skillTarget').value,
-      };
-      const r = await fetch('/api/skills/local/remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('skillsOutput').textContent = out;
+      const payload = {name: document.getElementById('skillInstallName').value, target: document.getElementById('skillTarget').value};
+      await jsonFetch('/api/skills/local/remove', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      document.getElementById('skillsOutput').textContent = '已移除';
+      listLocalSkills();
     }
 
-    async function loadCommonSkills() {
-      const r = await fetch('/api/skills/common/list');
-      const data = await r.json();
-      document.getElementById('commonSkills').value = JSON.stringify(data, null, 2);
-      document.getElementById('commonSkillsOutput').textContent = '已加载';
-    }
-
-    function importCommonSkillsSample() {
-      const sample = [
-        { name: 'skill-a', gitUrl: 'https://github.com/your/skill-a.git', target: 'managed' },
-        { name: 'skill-b', gitUrl: 'https://github.com/your/skill-b.git', target: 'workspace' }
-      ];
-      document.getElementById('commonSkills').value = JSON.stringify(sample, null, 2);
-      document.getElementById('commonSkillsOutput').textContent = '已导入示例清单';
-    }
-
-    async function saveCommonSkills() {
-      let payload = [];
-      try {
-        payload = JSON.parse(document.getElementById('commonSkills').value || '[]');
-      } catch (e) {
-        document.getElementById('commonSkillsOutput').textContent = 'JSON 格式错误';
-        return;
-      }
-      const r = await fetch('/api/skills/common/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('commonSkillsOutput').textContent = out;
-    }
-
-    async function installCommonSkill() {
-      const payload = { name: document.getElementById('commonSkillName').value };
-      const r = await fetch('/api/skills/common/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const out = await r.text();
-      document.getElementById('commonSkillsOutput').textContent = out;
-    }
-
-    async function installExtension() {
-      const r = await fetch('/api/browser/extension', { method: 'POST' });
-      const data = await r.json();
-      document.getElementById('extOutput').textContent = data.output || '';
-    }
-
-    async function extensionPath() {
-      const r = await fetch('/api/browser/extension/path');
-      const data = await r.json();
-      document.getElementById('extOutput').textContent = data.output || '';
-    }
-
+    // ===== Browser =====
     async function browserStatus() {
-      const r = await fetch('/api/browser/status');
-      const data = await r.json();
-      document.getElementById('extOutput').textContent = data.output || '';
+      const data = await jsonFetch('/api/browser/status');
+      document.getElementById('browserOutput').textContent = JSON.stringify(data, null, 2);
     }
-
     async function browserStart() {
-      const r = await fetch('/api/browser/start');
-      const data = await r.json();
-      document.getElementById('extOutput').textContent = data.output || '';
+      const data = await jsonFetch('/api/browser/start', {method:'POST'});
+      document.getElementById('browserOutput').textContent = JSON.stringify(data, null, 2);
     }
-
     async function browserStop() {
-      const r = await fetch('/api/browser/stop');
-      const data = await r.json();
-      document.getElementById('extOutput').textContent = data.output || '';
+      const data = await jsonFetch('/api/browser/stop', {method:'POST'});
+      document.getElementById('browserOutput').textContent = JSON.stringify(data, null, 2);
     }
 
-    async function browserOpen() {
-      const payload = { url: document.getElementById('browserUrl').value };
-      const r = await fetch('/api/browser/open', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      document.getElementById('extOutput').textContent = data.output || '';
+    // ===== Backups =====
+    async function createBackup() {
+      const res = await jsonFetch('/api/backups/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: document.getElementById('backupName').value})});
+      document.getElementById('backupOutput').textContent = res.output || 'ok';
+    }
+    async function listBackups() {
+      const data = await jsonFetch('/api/backups/list');
+      document.getElementById('backupOutput').textContent = data.join("\n");
+    }
+    async function downloadBackup() {
+      const name = document.getElementById('downloadName').value;
+      window.open(`/api/backups/download?name=${encodeURIComponent(name)}`, '_blank');
+    }
+    async function restoreBackup() {
+      const name = document.getElementById('restoreName').value;
+      const res = await jsonFetch('/api/backups/restore', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name})});
+      document.getElementById('backupOutput').textContent = res.output || 'ok';
     }
 
-    async function browserShot() {
-      const payload = { path: document.getElementById('shotPath').value };
-      const r = await fetch('/api/browser/screenshot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      document.getElementById('extOutput').textContent = data.output || '';
+    // ===== Logs =====
+    async function loadLogs() {
+      const data = await jsonFetch('/api/logs');
+      document.getElementById('logsOutput').textContent = data.output || '';
+    }
+    async function searchLogs() {
+      const q = document.getElementById('logQuery').value;
+      const data = await jsonFetch('/api/logs/search', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query: q})});
+      document.getElementById('logsOutput').textContent = data.output || '';
+    }
+    let logTimer = null;
+    function setLogAuto() {
+      const v = parseInt(document.getElementById('logAutoInterval').value || '0');
+      if (logTimer) { clearInterval(logTimer); logTimer = null; }
+      if (v > 0) logTimer = setInterval(loadLogs, v);
     }
 
-    async function loadTemplates() {
-      const r = await fetch('/api/templates');
-      const data = await r.json();
-      const sel = document.getElementById('templateSelect');
-      sel.innerHTML = '';
-      const optDefault = document.createElement('option');
-      optDefault.value = '';
-      optDefault.textContent = '选择模板';
-      sel.appendChild(optDefault);
+    refreshDashboard();
 
-      const globalHeader = document.createElement('option');
-      globalHeader.disabled = true;
-      globalHeader.textContent = '— 国外模板 —';
-      sel.appendChild(globalHeader);
-
-      data.slice(0, 4).forEach((t) => {
-        const opt = document.createElement('option');
-        opt.value = JSON.stringify(t);
-        opt.textContent = t.name;
-        sel.appendChild(opt);
-      });
-
-      const cnHeader = document.createElement('option');
-      cnHeader.disabled = true;
-      cnHeader.textContent = '— 国产模板 —';
-      sel.appendChild(cnHeader);
-
-      data.slice(4).forEach((t) => {
-        const opt = document.createElement('option');
-        opt.value = JSON.stringify(t);
-        opt.textContent = t.name;
-        sel.appendChild(opt);
-      });
-
-      sel.addEventListener('change', () => {
-        if (!sel.value) return;
-        const t = JSON.parse(sel.value);
-        document.getElementById('baseUrl').value = t.baseUrl || '';
-        document.getElementById('model').value = t.model || '';
-      });
+    async function cronStatus() {
+      const res = await jsonFetch('/api/cron/status');
+      document.getElementById('cronManage').textContent = res.output || '';
     }
 
-    detectConfig();
-    loadConfig();
-    loadChannels();
-    loadTemplates();
-  </script>
+
+    async function cronRunNow() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch('/api/cron/run', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+
+
+    async function cronEnable() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch('/api/cron/enable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+
+
+    async function cronDisable() {
+      const id = document.getElementById('cronId').value;
+      const res = await jsonFetch('/api/cron/disable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+      document.getElementById('cronManage').textContent = res.output || '';
+    }
+
+</script>
 </body>
 </html>
