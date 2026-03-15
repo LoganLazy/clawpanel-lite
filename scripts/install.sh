@@ -43,15 +43,25 @@ if ! command -v git >/dev/null 2>&1; then
   fi
 fi
 
-if ! command -v go >/dev/null 2>&1; then
-  if command -v apt >/dev/null 2>&1; then
-    apt update && apt install -y golang
-  elif command -v yum >/dev/null 2>&1; then
-    yum install -y golang
-  else
-    echo "Please install golang first."; exit 1
+
+ensure_go() {
+  if command -v go >/dev/null 2>&1; then
+    GOV=$(go env GOVERSION | sed 's/^go//')
+    MAJOR=$(echo "$GOV" | cut -d. -f1)
+    MINOR=$(echo "$GOV" | cut -d. -f2)
+    if [ "$MAJOR" -gt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -ge 19 ]; }; then
+      return 0
+    fi
   fi
-fi
+  echo "Installing Go 1.20..."
+  GO_TAR=go1.20.14.linux-amd64.tar.gz
+  curl -fsSL https://go.dev/dl/$GO_TAR -o /tmp/$GO_TAR
+  rm -rf /usr/local/go
+  tar -C /usr/local -xzf /tmp/$GO_TAR
+  export PATH=/usr/local/go/bin:$PATH
+}
+
+ensure_go
 
 if [ "$OPENCLAW_INSTALL" = "1" ] && ! command -v openclaw >/dev/null 2>&1; then
   if [ "$OPENCLAW_CN" = "1" ]; then
