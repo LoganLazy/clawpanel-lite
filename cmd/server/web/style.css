@@ -391,3 +391,5 @@ pre.status {
 }
 
 button:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+.shot { width: 100%; max-height: 420px; object-fit: contain; margin-top: 10px; border-radius: 12px; border: 1px solid var(--border); background: rgba(2,6,23,0.6); }

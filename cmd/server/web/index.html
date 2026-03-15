@@ -344,12 +344,21 @@
         </section>
 
         <section class="card section" data-section="browser">
-          <div class="section-title"><h2>浏览器</h2><span class="muted">扩展</span></div>
+          <div class="section-title"><h2>浏览器扩展</h2><span class="muted">安装 / 截图</span></div>
           <div class="actions">
             <button class="secondary" onclick="browserStatus()">状态</button>
             <button class="secondary" onclick="browserStart()">启动</button>
             <button class="secondary" onclick="browserStop()">停止</button>
+            <button onclick="browserInstall()">安装扩展</button>
           </div>
+          <div class="row">
+            <label>截图 URL（可选）</label>
+            <input id="browserShotUrl" placeholder="https://example.com" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="browserScreenshot()">获取截图</button>
+          </div>
+          <img id="browserShot" class="shot" alt="screenshot" />
           <pre id="browserOutput" class="status"></pre>
         </section>
 
@@ -856,6 +865,20 @@ async function downloadBackup() {
     }
 
     refreshDashboard();
+
+    async function browserInstall() {
+      const data = await jsonFetch('/api/browser/extension');
+      document.getElementById('browserOutput').textContent = data.output || JSON.stringify(data, null, 2);
+    }
+
+    async function browserScreenshot() {
+      const url = document.getElementById('browserShotUrl').value;
+      const res = await jsonFetch('/api/browser/screenshot', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url})});
+      if (res.image) {
+        document.getElementById('browserShot').src = 'data:image/png;base64,' + res.image;
+      }
+      document.getElementById('browserOutput').textContent = res.output || '截图完成';
+    }
 </script>
 </body>
 </html>
