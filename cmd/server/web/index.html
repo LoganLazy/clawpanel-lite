@@ -46,7 +46,7 @@
         </div>
         <div class="row">
           <label>API Key</label>
-          <input id="initApiKey" placeholder="sk-..." />
+          <input id="initApiKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-..." />
         </div>
         <div class="actions">
           <button class="secondary" onclick="initSaveConfig()">保存配置</button>
@@ -59,6 +59,7 @@
         <div class="sidebar-title">功能菜单</div>
         <button class="nav-item active" data-target="dashboard">仪表盘</button>
         <button class="nav-item" data-target="config">配置</button>
+        <button class="nav-item" data-target="config-tools">配置工具</button>
         <button class="nav-item" data-target="account">账号安全</button>
         <button class="nav-item" data-target="system">系统概况</button>
         <button class="nav-item" data-target="logs">日志</button>
@@ -126,7 +127,7 @@
           </div>
           <div class="row">
             <label>API Key</label>
-            <input id="apiKey" placeholder="sk-..." />
+            <input id="apiKey" placeholder="sk-..." autocomplete="off" autocapitalize="off" spellcheck="false" />
           </div>
           <div class="row">
             <label>国产模板</label>
@@ -139,20 +140,31 @@
           <pre id="configStatus" class="status"></pre>
         </section>
 
+
+        <section class="card section" data-section="config-tools">
+          <div class="section-title"><h2>配置工具</h2><span class="muted">校验 / 导出</span></div>
+          <p class="muted">快速校验当前 openclaw 配置，并导出配置文件</p>
+          <div class="actions">
+            <button class="secondary" onclick="validateConfig()">校验配置 (openclaw config validate)</button>
+            <a class="link-btn" href="/api/config/download" target="_blank">下载当前配置</a>
+          </div>
+          <pre id="configToolsOutput" class="status"></pre>
+        </section>
+
         <section class="card section" data-section="account">
           <div class="section-title"><h2>账号安全</h2><span class="muted">修改面板密码</span></div>
           <p class="muted">用户名固定为 admin，仅支持修改密码</p>
           <div class="row">
             <label>当前密码</label>
-            <input id="pwdOld" type="password" placeholder="当前密码" />
+            <input id="pwdOld" autocomplete="off" autocapitalize="off" spellcheck="false" type="password" placeholder="当前密码" />
           </div>
           <div class="row">
             <label>新密码</label>
-            <input id="pwdNew" type="password" placeholder="新密码" />
+            <input id="pwdNew" autocomplete="off" autocapitalize="off" spellcheck="false" type="password" placeholder="新密码" />
           </div>
           <div class="row">
             <label>确认新密码</label>
-            <input id="pwdNew2" type="password" placeholder="确认新密码" />
+            <input id="pwdNew2" autocomplete="off" autocapitalize="off" spellcheck="false" type="password" placeholder="确认新密码" />
           </div>
           <div class="actions">
             <button class="secondary" onclick="changePassword()">修改密码</button>
@@ -183,7 +195,7 @@
           </div>
           <div class="row">
             <label>自动刷新</label>
-            <select id="logAutoInterval">
+            <select id="logAutoInterval" onchange="setLogAuto()">
               <option value="0">关闭</option>
               <option value="5000">5 秒</option>
               <option value="10000">10 秒</option>
@@ -309,7 +321,7 @@
             <div class="pill" id="gatewayPill">Gateway: 未知</div>
           </div>
           <div class="actions">
-            <button class="secondary" onclick="loadStatus()">刷新状态</button>
+            <button class="secondary" onclick="refreshStatus()">刷新状态</button>
             <button class="danger" onclick="restartGateway()">重启 Gateway</button>
           </div>
           <pre id="statusOutput" class="status"></pre>
@@ -470,6 +482,17 @@
         </section>
 
         
+      
+        <section class="card section" data-section="config-path">
+          <div class="section-title"><h2>配置文件</h2><span class="muted">路径 / 导出</span></div>
+          <p class="muted">查看当前探测到的 OpenClaw 配置文件路径</p>
+          <div class="actions">
+            <button class="secondary" onclick="detectConfig()">刷新探测</button>
+            <a class="link-btn" href="/api/config/download" target="_blank">下载配置</a>
+          </div>
+          <pre id="configPath" class="status"></pre>
+        </section>
+
       </main>
     </div>
   </div>
@@ -656,7 +679,20 @@ function setActiveSection(name) {
       }
     }
 
-async function detectConfig() {
+
+    async function validateConfig() {
+      const outEl = document.getElementById('configToolsOutput');
+      if (outEl) outEl.textContent = '校验中...';
+      try {
+        const r = await fetch('/api/config/validate');
+        const data = await r.json();
+        if (outEl) outEl.textContent = data.output || '';
+      } catch (e) {
+        if (outEl) outEl.textContent = '校验失败';
+      }
+    }
+
+    async function detectConfig() {
       const r = await fetch('/api/config/status');
       const data = await r.json();
       document.getElementById('configPath').textContent = JSON.stringify(data, null, 2);
@@ -780,7 +816,7 @@ async function loadLogs() {
       document.getElementById('channelsRawStatus').textContent = out;
     }
 
-        function downloadBackup() {
+    function downloadBackup() {
       const name = document.getElementById('downloadName').value;
       if (!name) {
         document.getElementById('backupOutput').textContent = '请输入备份文件名';
@@ -791,7 +827,7 @@ async function loadLogs() {
       link.click();
     }
 
-async function createBackup() {
+    async function createBackup() {
       const payload = { name: document.getElementById('backupName').value };
       const r = await fetch('/api/backups/create', {
         method: 'POST',
@@ -839,6 +875,16 @@ async function createBackup() {
       const data = await r.json();
       document.getElementById('pairOutput').textContent = data.output || '';
     }
+    async function refreshStatus() {
+      await loadStatus();
+      try {
+        const s = await fetch('/api/status');
+        const data = await s.json();
+        document.getElementById('dashOpenclaw').textContent = (data.openclaw || '').split('\n')[0] || 'unknown';
+        document.getElementById('dashGateway').textContent = (data.gateway || '').split('\n')[0] || 'unknown';
+      } catch (e) {}
+    }
+
 
     async function loadStatus() {
       const r = await fetch('/api/status');
@@ -861,23 +907,18 @@ async function createBackup() {
     }
 
     async function restartGateway() {
-      const r = await fetch('/api/gateway/restart', { method: 'POST' });
-      const data = await r.json();
-      document.getElementById('statusOutput').textContent = JSON.stringify(data, null, 2);
-      const openclawOk = (data.openclaw || '').toLowerCase().includes('running');
-      const gatewayOk = (data.gateway || '').toLowerCase().includes('running');
-      const openPill = document.getElementById('openclawPill');
-      const gatePill = document.getElementById('gatewayPill');
-      if (openPill) {
-        openPill.textContent = openclawOk ? 'OpenClaw: 运行中' : 'OpenClaw: 未知';
-        openPill.classList.toggle('ok', openclawOk);
-        openPill.classList.toggle('fail', !openclawOk);
+      const outEl = document.getElementById('statusOutput');
+      if (!confirm('确定要重启 Gateway 吗？')) return;
+      if (outEl) outEl.textContent = '重启中...';
+      try {
+        const r = await fetch('/api/gateway/restart', { method: 'POST' });
+        const data = await r.json();
+        if (outEl) outEl.textContent = (data.output || JSON.stringify(data, null, 2));
+      } catch (e) {
+        if (outEl) outEl.textContent = '重启失败';
       }
-      if (gatePill) {
-        gatePill.textContent = gatewayOk ? 'Gateway: 运行中' : 'Gateway: 未知';
-        gatePill.classList.toggle('ok', gatewayOk);
-        gatePill.classList.toggle('fail', !gatewayOk);
-      }
+      // 重新拉取状态（更新 pills）
+      try { await loadStatus(); } catch (e) {}
     }
 
     async function listCron() {

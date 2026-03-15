@@ -276,6 +276,39 @@ func main() {
 		writeJSON(w, payload)
 	}))
 
+	mux.HandleFunc("/api/config/validate", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		if !openclawExists() {
+			http.Error(w, "openclaw not installed", http.StatusBadRequest)
+			return
+		}
+		out := runCmd(bin, withProfile(profile, "config", "validate")...)
+		writeJSON(w, map[string]string{"output": out})
+	}))
+
+	mux.HandleFunc("/api/config/download", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		path, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			http.Error(w, "failed to read config", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Disposition", "attachment; filename=openclaw.json")
+		_, _ = w.Write(data)
+	}))
+
 	mux.HandleFunc("/api/config/set", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -557,6 +590,31 @@ func main() {
 		writeJSON(w, map[string]interface{}{"current": current, "latest": latest, "hasUpdate": hasUpdate, "installed": current != ""})
 	}))
 
+	mux.HandleFunc("/api/chat", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload chatPayload
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		msg := strings.TrimSpace(payload.Message)
+		if msg == "" {
+			msg = "你好"
+		}
+		start := time.Now()
+		args := withProfile(profile, "agent", "--message", msg, "--json")
+		if strings.TrimSpace(payload.Model) != "" {
+			args = append(args, "--model", payload.Model)
+		}
+		out := runCmd(bin, args...)
+		latency := time.Since(start).Milliseconds()
+		ok := !strings.Contains(out, "(err:")
+		writeJSON(w, chatTestResp{Output: out, LatencyMs: latency, Ok: ok})
+	}))
 	mux.HandleFunc("/api/chat/test", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -737,6 +795,37 @@ func main() {
 		items := listBackups()
 		writeJSON(w, items)
 	}))
+	mux.HandleFunc("/api/backups/download", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		name, err := safeBaseName(r.URL.Query().Get("name"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		configPath, found := detectConfigPath()
+		if !found {
+			http.Error(w, "config not found", http.StatusNotFound)
+			return
+		}
+		backupDir := filepath.Dir(configPath) + "/backups"
+		full := filepath.Join(backupDir, name)
+		if !fileExists(full) {
+			http.Error(w, "backup not found", http.StatusNotFound)
+			return
+		}
+		data, err := os.ReadFile(full)
+		if err != nil {
+			http.Error(w, "failed to read backup", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Disposition", "attachment; filename="+name)
+		_, _ = w.Write(data)
+	}))
+
 	mux.HandleFunc("/api/skills/common/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		items := loadCommonSkills()
 		writeJSON(w, items)
@@ -1004,6 +1093,28 @@ func expand(p string) string {
 func fileExists(p string) bool {
 	st, err := os.Stat(p)
 	return err == nil && !st.IsDir()
+}
+
+func dirExists(p string) bool {
+	st, err := os.Stat(p)
+	return err == nil && st.IsDir()
+}
+
+func pathExists(p string) bool {
+	_, err := os.Stat(p)
+	return err == nil
+}
+
+func safeBaseName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	name = filepath.Base(name)
+	if name == "" || name == "." {
+		return "", errors.New("name required")
+	}
+	if !(strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".json5")) {
+		return "", errors.New("invalid file type")
+	}
+	return name, nil
 }
 
 func extractConfig(raw []byte) configPayload {
@@ -1294,7 +1405,7 @@ func installSkill(payload skillManagePayload) error {
 		return err
 	}
 	dest := filepath.Join(base, name)
-	if fileExists(dest) {
+	if pathExists(dest) {
 		return errors.New("skill already exists")
 	}
 	out := runCmd("git", "clone", payload.GitURL, dest)
@@ -1314,7 +1425,7 @@ func updateSkill(payload skillManagePayload) error {
 		base = skillsDirWorkspace()
 	}
 	path := filepath.Join(base, name)
-	if !fileExists(path) {
+	if !dirExists(path) {
 		return errors.New("skill not found")
 	}
 	out := runCmd("git", "-C", path, "pull")
@@ -1334,7 +1445,7 @@ func removeSkill(payload skillManagePayload) error {
 		base = skillsDirWorkspace()
 	}
 	path := filepath.Join(base, name)
-	if !fileExists(path) {
+	if !dirExists(path) {
 		return errors.New("skill not found")
 	}
 	trash := filepath.Join(base, ".trash")

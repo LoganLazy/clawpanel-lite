@@ -177,7 +177,7 @@ button.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
 .login-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding: 24px; }
 
 .login-card {
-  width: 360px; background: var(--panel); padding: 24px; border-radius: 16px;
+  width: 360px; background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(8,12,22,0.92)); padding: 24px; border-radius: 16px;
   border:1px solid var(--border);
 }
 
@@ -307,4 +307,28 @@ button:disabled {
 
 .sidebar .nav-item:hover {
   background: rgba(99,102,241,0.12);
+}
+
+
+footer {
+  text-align: center;
+  padding: 18px 0 28px;
+  opacity: 0.85;
+}
+
+
+a { color: inherit; }
+
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: rgba(34,211,238,0.35);
+  box-shadow: 0 0 0 3px rgba(34,211,238,0.12);
+}
+
+
+pre.status {
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
 }
