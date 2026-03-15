@@ -61,6 +61,7 @@
         <button class="nav-item" data-target="chat">实时聊天</button>
         <button class="nav-item" data-target="models">模型配置</button>
         <button class="nav-item" data-target="gateway">Gateway</button>
+        <button class="nav-item" data-target="security">安全设置</button>
         <button class="nav-item" data-target="memory">记忆文件</button>
         <button class="nav-item" data-target="channels">消息渠道</button>
         <button class="nav-item" data-target="cron">定时任务</button>
@@ -86,35 +87,14 @@
         </section>
 
         <section class="card section" data-section="chat">
-          <div class="section-title"><h2>实时聊天</h2><span class="muted">Streaming</span></div>
-          <div class="chat-layout">
-            <div class="chat-sidebar">
-              <div class="row">
-                <label>Gateway Host</label>
-                <input id="gwHost" placeholder="127.0.0.1:18789" />
-              </div>
-              <div class="row">
-                <label>Gateway Token</label>
-                <input id="gwToken" placeholder="token" />
-              </div>
-              <div class="row">
-                <label>Session ID</label>
-                <input id="chatSession" placeholder="agent:main:main" />
-              </div>
+          <div class="section-title"><h2>实时聊天</h2><span class="muted">对话</span></div>
+          <div class="chat-main">
+            <div id="chatMessages" class="chat-messages"></div>
+            <div class="chat-input">
+              <textarea id="chatInput" rows="3" placeholder="输入消息..."></textarea>
               <div class="actions">
-                <button class="secondary" onclick="connectGateway()">连接</button>
-                <button class="secondary" onclick="loadSessions()">刷新会话</button>
-              </div>
-              <div id="sessionList" class="session-list"></div>
-            </div>
-            <div class="chat-main">
-              <div id="chatMessages" class="chat-messages"></div>
-              <div class="chat-input">
-                <textarea id="chatInput" rows="3" placeholder="输入消息..."></textarea>
-                <div class="actions">
-                  <button class="secondary" onclick="abortChat()">停止生成</button>
-                  <button onclick="sendChat()">发送</button>
-                </div>
+                <button class="secondary" onclick="abortChat()">停止生成</button>
+                <button onclick="sendChat()">发送</button>
               </div>
             </div>
           </div>
@@ -208,7 +188,16 @@
           <pre id="gwStatus" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="memory">
+        <section class="card section" data-section="security">
+          <div class="section-title"><h2>安全设置</h2><span class="muted">管理员密码</span></div>
+          <div class="row"><label>当前密码</label><input id="pwdOld" type="password" /></div>
+          <div class="row"><label>新密码</label><input id="pwdNew" type="password" /></div>
+          <div class="row"><label>确认新密码</label><input id="pwdNew2" type="password" /></div>
+          <div class="actions"><button class="secondary" onclick="changePassword()">修改密码</button></div>
+          <pre id="pwdOutput" class="status"></pre>
+        </section>
+
+<section class="card section" data-section="memory">
           <div class="section-title"><h2>记忆文件</h2><span class="muted">workspace/memory</span></div>
           <div class="row">
             <label>分类</label>
@@ -405,8 +394,6 @@
   <script>
     const state = {
       models: { config: null, providerKey: null },
-      gateway: { connected: false, ws: null, sessionKey: null },
-      currentSession: null,
       chatRuns: {},
     };
 
@@ -436,38 +423,6 @@
       document.getElementById('dashOpenclaw').textContent = firstLine(st.openclaw);
       document.getElementById('dashGateway').textContent = firstLine(st.gateway);
       document.getElementById('dashOutput').textContent = JSON.stringify({system:data, status:st}, null, 2);
-    }
-
-    // ===== Chat (WS) =====
-    function connectGateway() {
-      const host = document.getElementById('gwHost').value || '127.0.0.1:18789';
-      const token = document.getElementById('gwToken').value || '';
-      const ws = new WebSocket(`ws://${host}/ws?token=${encodeURIComponent(token)}`);
-      state.gateway.ws = ws;
-      ws.onopen = () => appendSystemMsg('已连接 Gateway');
-      ws.onmessage = (evt) => handleWsMessage(evt.data);
-      ws.onclose = () => appendSystemMsg('Gateway 已断开');
-    }
-
-    function handleWsMessage(raw) {
-      let msg = null;
-      try { msg = JSON.parse(raw); } catch { return; }
-      if (msg.type === 'event' && msg.event === 'chat.delta') {
-        const runId = msg.payload?.runId || 'run';
-        appendDelta(runId, msg.payload?.delta || '');
-      }
-      if (msg.type === 'event' && msg.event === 'chat.message') {
-        appendAssistant(msg.payload?.message || '');
-      }
-    }
-
-    function appendSystemMsg(text) {
-      const box = document.getElementById('chatMessages');
-      const el = document.createElement('div');
-      el.className = 'chat-msg system';
-      el.textContent = text;
-      box.appendChild(el);
-      box.scrollTop = box.scrollHeight;
     }
 
     function appendUser(text) {
@@ -532,13 +487,8 @@
       }
     }
 
-function abortChat() {
+    function abortChat() {
       if (state.chatRuns.current) state.chatRuns.current.abort();
-      appendSystemMsg('已停止');
-    }
-
-    function loadSessions() {
-      document.getElementById('sessionList').textContent = '暂不支持会话列表（轻量版）';
     }
 
     // ===== Models =====
@@ -663,6 +613,24 @@ function abortChat() {
       document.getElementById('gwStatus').textContent = '已保存并重启';
     }
 
+    function toggleChannel(id) {
+      const el = document.getElementById('channel-' + id);
+      if (!el) return;
+      el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    }
+
+    async function changePassword() {
+      const oldPass = document.getElementById('pwdOld').value;
+      const newPass = document.getElementById('pwdNew').value;
+      const newPass2 = document.getElementById('pwdNew2').value;
+      if (!newPass || newPass !== newPass2) {
+        document.getElementById('pwdOutput').textContent = '新密码不一致';
+        return;
+      }
+      const res = await jsonFetch('/api/account/password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({oldPass, newPass})});
+      document.getElementById('pwdOutput').textContent = res.status || 'ok';
+    }
+
     // ===== Memory =====
     async function listMemory() {
       const cat = document.getElementById('memCategory').value;
@@ -752,27 +720,23 @@ function abortChat() {
       const res = await jsonFetch('/api/cron/list');
       const out = res.output || '';
       document.getElementById('cronManage').textContent = out;
-      // 尝试解析 JSON
-      let jobs = [];
-      try {
-        const parsed = JSON.parse(out);
-        jobs = parsed.jobs || parsed || [];
-      } catch (e) {}
       const cards = document.getElementById('cronCards');
       cards.innerHTML = '';
-      if (!Array.isArray(jobs) || jobs.length === 0) {
-        cards.innerHTML = '<div class="muted">暂无任务</div>';
-        return;
-      }
-      jobs.forEach(j => {
-        const el = document.createElement('div');
-        el.className = 'cron-card';
-        el.innerHTML = `<div class="cron-title">${j.name || '未命名'}</div>
-          <div class="muted">${j.id || ''}</div>
-          <div class="muted">${JSON.stringify(j.schedule || {})}</div>
-          <div class="muted">${(j.payload && (j.payload.message || j.payload.text)) || ''}</div>`;
-        cards.appendChild(el);
-      });
+      try {
+        const parsed = JSON.parse(out);
+        const jobs = parsed.jobs || parsed || [];
+        if (Array.isArray(jobs)) {
+          jobs.forEach(j => {
+            const el = document.createElement('div');
+            el.className = 'cron-card';
+            el.innerHTML = `<div class="cron-title">${j.name || '未命名'}</div>
+              <div class="muted">${j.id || ''}</div>
+              <div class="muted">${JSON.stringify(j.schedule || {})}</div>
+              <div class="muted">${(j.payload && (j.payload.message || j.payload.text)) || ''}</div>`;
+            cards.appendChild(el);
+          });
+        }
+      } catch (e) {}
     }
     async function cronStatus() {
       const res = await jsonFetch('/api/cron/status');
@@ -863,7 +827,8 @@ function abortChat() {
       const data = await jsonFetch('/api/backups/list');
       document.getElementById('backupOutput').textContent = data.join("\n");
     }
-    async function downloadBackup() {
+
+async function downloadBackup() {
       const name = document.getElementById('downloadName').value;
       window.open(`/api/backups/download?name=${encodeURIComponent(name)}`, '_blank');
     }
@@ -891,12 +856,6 @@ function abortChat() {
     }
 
     refreshDashboard();
-
-    function toggleChannel(id) {
-      const el = document.getElementById('channel-' + id);
-      if (!el) return;
-      el.style.display = (el.style.display === 'none') ? 'block' : 'none';
-    }
 </script>
 </body>
 </html>
