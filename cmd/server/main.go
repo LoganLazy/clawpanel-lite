@@ -989,6 +989,58 @@ mux.HandleFunc("/api/cron/list", withAuth(sc, func(w http.ResponseWriter, r *htt
 		_, _ = w.Write(data)
 	}))
 
+	mux.HandleFunc("/api/skills/custom/create", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		body, _ := io.ReadAll(r.Body)
+		var payload struct { Name string `json:"name"`; Description string `json:"description"` }
+		if err := json.Unmarshal(body, &payload); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		name, err := sanitizeSkillName(payload.Name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		base := skillsDirWorkspace()
+		path := filepath.Join(base, name)
+		if pathExists(path) {
+			http.Error(w, "skill already exists", http.StatusBadRequest)
+			return
+		}
+		if err := os.MkdirAll(path, 0755); err != nil {
+			http.Error(w, "failed to create skill", http.StatusInternalServerError)
+			return
+		}
+		md := "# " + name + "
+
+" + strings.TrimSpace(payload.Description) + "
+
+" +
+			"## Usage
+
+Describe usage here.
+
+## Inputs
+
+- input: string
+
+## Outputs
+
+- output: string
+"
+		if err := os.WriteFile(filepath.Join(path, "SKILL.md"), []byte(md), 0644); err != nil {
+			http.Error(w, "failed to write skill", http.StatusInternalServerError)
+			return
+		}
+		_ = os.MkdirAll(filepath.Join(path, "scripts"), 0755)
+		writeJSON(w, map[string]string{"status": "ok", "path": path})
+	}))
+
+
 	mux.HandleFunc("/api/skills/common/list", withAuth(sc, func(w http.ResponseWriter, r *http.Request) {
 		items := loadCommonSkills()
 		writeJSON(w, items)
@@ -1351,6 +1403,22 @@ func safeBaseName(name string) (string, error) {
 	}
 	return name, nil
 }
+
+func sanitizeSkillName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	name = strings.ToLower(name)
+	if name == "" {
+		return "", errors.New("name required")
+	}
+	for _, ch := range name {
+		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' {
+			continue
+		}
+		return "", errors.New("invalid name")
+	}
+	return name, nil
+}
+
 
 func contentTypeForName(name string) string {
 	if strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".json5") {

@@ -341,6 +341,15 @@
             <button class="danger" onclick="removeSkillLocal()">移除</button>
           </div>
           <pre id="skillsOutput" class="status"></pre>
+          <div class="row">
+            <label>自定义技能</label>
+            <input id="customSkillName" placeholder="my-skill" />
+            <input id="customSkillDesc" placeholder="一句话描述" />
+          </div>
+          <div class="actions">
+            <button class="secondary" onclick="createCustomSkill()">创建技能骨架</button>
+          </div>
+
         </section>
 
         <section class="card section" data-section="browser">
@@ -878,6 +887,14 @@ async function downloadBackup() {
         document.getElementById('browserShot').src = 'data:image/png;base64,' + res.image;
       }
       document.getElementById('browserOutput').textContent = res.output || '截图完成';
+    }
+
+    async function createCustomSkill() {
+      const name = document.getElementById('customSkillName').value;
+      const description = document.getElementById('customSkillDesc').value;
+      const res = await jsonFetch('/api/skills/custom/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, description})});
+      document.getElementById('skillsOutput').textContent = res.path || '已创建';
+      listLocalSkills();
     }
 </script>
 </body>
