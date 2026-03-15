@@ -358,3 +358,7 @@ pre.status {
 .channel-card { background: rgba(15,23,42,0.6); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
 .channel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-weight:600; }
 .channel-body { display:block; }
+
+.cron-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:12px; }
+.cron-card { background: rgba(15,23,42,0.6); border-radius: 10px; padding: 10px; }
+.cron-title { font-weight:600; margin-bottom:4px; }

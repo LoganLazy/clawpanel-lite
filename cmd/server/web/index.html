@@ -298,7 +298,7 @@
         </section>
 
         <section class="card section" data-section="cron">
-          <div class="section-title"><h2>定时任务</h2><span class="muted">Cron</span></div>
+          <div class="section-title"><h2>定时任务</h2><span class="muted">卡片视图</span></div>
           <div class="actions">
             <button onclick="cronStatus()">状态</button>
             <button class="secondary" onclick="listCron()">刷新列表</button>
@@ -311,10 +311,7 @@
             <select id="cronMode"><option value="every">循环</option><option value="once">一次</option></select>
             <button onclick="cronAdd()">创建</button>
           </div>
-          <div class="row">
-            <label>任务列表</label>
-            <div id="cronList" class="status"></div>
-          </div>
+          <div class="cron-grid" id="cronCards"></div>
           <div class="row">
             <label>任务 ID</label>
             <input id="cronId" placeholder="job-id" />
@@ -755,7 +752,27 @@ function abortChat() {
       const res = await jsonFetch('/api/cron/list');
       const out = res.output || '';
       document.getElementById('cronManage').textContent = out;
-      document.getElementById('cronList').textContent = out;
+      // 尝试解析 JSON
+      let jobs = [];
+      try {
+        const parsed = JSON.parse(out);
+        jobs = parsed.jobs || parsed || [];
+      } catch (e) {}
+      const cards = document.getElementById('cronCards');
+      cards.innerHTML = '';
+      if (!Array.isArray(jobs) || jobs.length === 0) {
+        cards.innerHTML = '<div class="muted">暂无任务</div>';
+        return;
+      }
+      jobs.forEach(j => {
+        const el = document.createElement('div');
+        el.className = 'cron-card';
+        el.innerHTML = `<div class="cron-title">${j.name || '未命名'}</div>
+          <div class="muted">${j.id || ''}</div>
+          <div class="muted">${JSON.stringify(j.schedule || {})}</div>
+          <div class="muted">${(j.payload && (j.payload.message || j.payload.text)) || ''}</div>`;
+        cards.appendChild(el);
+      });
     }
     async function cronStatus() {
       const res = await jsonFetch('/api/cron/status');
