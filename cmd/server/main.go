@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/subtle"
 	"embed"
 	"encoding/json"
