@@ -1117,6 +1117,14 @@ func safeBaseName(name string) (string, error) {
 	return name, nil
 }
 
+func contentTypeForName(name string) string {
+	if strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".json5") {
+		return "application/json"
+	}
+	return "text/plain"
+}
+
+
 func extractConfig(raw []byte) configPayload {
 	clean := jsonc.ToJSON(raw)
 	model := gjson.GetBytes(clean, "agents.defaults.model.primary").String()
@@ -1554,12 +1562,16 @@ func restoreBackup(configPath string, name string) error {
 	if !fileExists(path) {
 		return errors.New("backup not found")
 	}
+	current, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 	backup := configPath + ".bak"
-	_ = os.WriteFile(backup, src, 0644)
+	_ = os.WriteFile(backup, current, 0644)
 	if err := os.WriteFile(configPath, src, 0644); err != nil {
 		return err
 	}

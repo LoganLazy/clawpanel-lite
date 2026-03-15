@@ -275,7 +275,7 @@
             <button class="secondary" onclick="listBackups()">查看备份</button>
           </div>
           <div class="row">
-            <label>下载备份（文件名）</label>
+            <label>下载备份（文件名，可从列表复制）</label>
             <input id="downloadName" placeholder="20260313-123000.json" />
           </div>
           <div class="actions">
@@ -838,10 +838,15 @@ async function loadLogs() {
       document.getElementById('backupOutput').textContent = out;
     }
 
-    async function listBackups() {
+        async function listBackups() {
       const r = await fetch('/api/backups/list');
       const data = await r.json();
-      document.getElementById('backupOutput').textContent = JSON.stringify(data, null, 2);
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById('backupOutput').textContent = '暂无备份';
+        return;
+      }
+      const lines = data.map((name) => `- ${name}`);
+      document.getElementById('backupOutput').textContent = lines.join("\n");
     }
 
     async function restoreBackup() {
@@ -876,15 +881,11 @@ async function loadLogs() {
       document.getElementById('pairOutput').textContent = data.output || '';
     }
     async function refreshStatus() {
-      await loadStatus();
-      try {
-        const s = await fetch('/api/status');
-        const data = await s.json();
-        document.getElementById('dashOpenclaw').textContent = (data.openclaw || '').split('\n')[0] || 'unknown';
-        document.getElementById('dashGateway').textContent = (data.gateway || '').split('\n')[0] || 'unknown';
-      } catch (e) {}
+      const data = await loadStatus();
+      if (!data) return;
+      document.getElementById('dashOpenclaw').textContent = (data.openclaw || '').split("\n")[0] || 'unknown';
+      document.getElementById('dashGateway').textContent = (data.gateway || '').split("\n")[0] || 'unknown';
     }
-
 
     async function loadStatus() {
       const r = await fetch('/api/status');
@@ -904,6 +905,13 @@ async function loadLogs() {
         gatePill.classList.toggle('ok', gatewayOk);
         gatePill.classList.toggle('fail', !gatewayOk);
       }
+      return data;
+    }
+
+    async function listCron() {
+      const r = await fetch('/api/cron/list');
+      const data = await r.json();
+      document.getElementById('cronManage').textContent = data.output || '';
     }
 
     async function restartGateway() {
@@ -917,15 +925,9 @@ async function loadLogs() {
       } catch (e) {
         if (outEl) outEl.textContent = '重启失败';
       }
-      // 重新拉取状态（更新 pills）
       try { await loadStatus(); } catch (e) {}
     }
 
-    async function listCron() {
-      const r = await fetch('/api/cron/list');
-      const data = await r.json();
-      document.getElementById('cronManage').textContent = data.output || '';
-    }
 
     async function cronRuns() {
       const id = document.getElementById('cronId').value;
