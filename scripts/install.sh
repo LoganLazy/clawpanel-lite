@@ -49,8 +49,10 @@ ensure_go() {
     GOV=$(go env GOVERSION | sed 's/^go//')
     MAJOR=$(echo "$GOV" | cut -d. -f1)
     MINOR=$(echo "$GOV" | cut -d. -f2)
-    if [ "$MAJOR" -gt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -ge 19 ]; }; then
-      return 0
+    if [[ "$MAJOR" =~ ^[0-9]+$ ]] && [[ "$MINOR" =~ ^[0-9]+$ ]]; then
+      if [ "$MAJOR" -gt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -ge 19 ]; }; then
+        return 0
+      fi
     fi
   fi
   echo "Installing Go 1.20..."
