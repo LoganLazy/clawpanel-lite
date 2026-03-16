@@ -114,91 +114,129 @@
         </section>
 
         <section class="page" data-page="models">
-          <div class="page-header"><div><div class="page-title">模型配置</div><div class="page-desc">providers / models</div></div></div>
-          <div class="row">
-            <label>当前主模型</label>
-            <input id="modelPrimary" placeholder="openai/gpt-4o" />
-            <button class="secondary" onclick="setPrimaryModel()">设为主模型</button>
+          <div class="page-header">
+            <div>
+              <div class="page-title">模型配置</div>
+              <div class="page-desc">Providers / Models</div>
+            </div>
           </div>
-          <div class="models-layout">
-            <div class="models-sidebar">
-              <div class="actions">
-                <button class="secondary" onclick="loadModels()">刷新</button>
-                <button onclick="addProvider()">添加服务商</button>
-              </div>
-              <div id="providerList" class="provider-list"></div>
+          <div class="tab-bar">
+            <div class="tab active">服务商</div>
+            <div class="tab">模型</div>
+            <div class="tab">主模型</div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">服务商配置</div>
+            <div class="form-group">
+              <label class="form-label">服务商名称</label>
+              <input class="form-input" id="providerKey" placeholder="openai" />
             </div>
-            <div class="models-editor">
-              <div class="row">
-                <label>服务商</label>
-                <input id="providerKey" placeholder="openai" />
-              </div>
-              <div class="row">
-                <label>Base URL</label>
-                <input id="providerBase" placeholder="https://api.openai.com/v1" />
-              </div>
-              <div class="row">
-                <label>API 类型</label>
-                <select id="providerApi">
-                  <option value="openai-completions">OpenAI 兼容</option>
-                  <option value="anthropic-messages">Anthropic 原生</option>
-                  <option value="openai-responses">OpenAI Responses</option>
-                  <option value="google-gemini">Google Gemini</option>
-                </select>
-              </div>
-              <div class="row">
-                <label>API Key</label>
-                <input id="providerKeyValue" placeholder="sk-..." />
-              </div>
-              <div class="row">
-                <label>模型 ID</label>
-                <input id="modelId" placeholder="gpt-4o" />
-              </div>
-              <div class="row">
-                <label>模型名称</label>
-                <input id="modelName" placeholder="GPT-4o" />
-              </div>
-              <div class="row">
-                <label>上下文(可选)</label>
-                <input id="modelContext" placeholder="128000" />
-              </div>
-              <div class="row">
-                <label>推理模型</label>
-                <select id="modelReasoning"><option value="false">否</option><option value="true">是</option></select>
-              </div>
-              <div class="actions">
-                <button class="secondary" onclick="saveProvider()">保存服务商</button>
-                <button class="secondary" onclick="addModel()">添加模型</button>
-                <button class="danger" onclick="deleteProvider()">删除服务商</button>
-              </div>
-              <pre id="modelsStatus" class="status"></pre>
+            <div class="form-group">
+              <label class="form-label">Base URL</label>
+              <input class="form-input" id="providerBase" placeholder="https://api.openai.com/v1" />
             </div>
+            <div class="form-group">
+              <label class="form-label">API 类型</label>
+              <select class="form-input" id="providerApi">
+                <option value="openai-completions">OpenAI 兼容</option>
+                <option value="anthropic-messages">Anthropic 原生</option>
+                <option value="openai-responses">OpenAI Responses</option>
+                <option value="google-gemini">Google Gemini</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">API Key</label>
+              <input class="form-input" id="providerKeyValue" placeholder="sk-..." />
+            </div>
+            <div class="config-actions">
+              <button class="btn btn-secondary" onclick="loadModels()">刷新</button>
+              <button class="btn btn-secondary" onclick="addProvider()">新增服务商</button>
+              <button class="btn btn-primary" onclick="saveProvider()">保存服务商</button>
+              <button class="btn btn-danger" onclick="deleteProvider()">删除服务商</button>
+            </div>
+            <div id="providerList" class="provider-list"></div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">模型配置</div>
+            <div class="form-group">
+              <label class="form-label">模型 ID</label>
+              <input class="form-input" id="modelId" placeholder="gpt-4o" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">模型名称</label>
+              <input class="form-input" id="modelName" placeholder="GPT-4o" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">上下文</label>
+              <input class="form-input" id="modelContext" placeholder="128000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">推理模型</label>
+              <select class="form-input" id="modelReasoning"><option value="false">否</option><option value="true">是</option></select>
+            </div>
+            <div class="config-actions">
+              <button class="btn btn-primary" onclick="addModel()">添加模型</button>
+            </div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">主模型</div>
+            <div class="form-group">
+              <label class="form-label">当前主模型</label>
+              <input class="form-input" id="modelPrimary" placeholder="openai/gpt-4o" />
+            </div>
+            <div class="config-actions">
+              <button class="btn btn-primary" onclick="setPrimaryModel()">设为主模型</button>
+            </div>
+            <pre id="modelsStatus" class="status"></pre>
           </div>
         </section>
 
         <section class="page" data-page="gateway">
-          <div class="page-header"><div><div class="page-title">Gateway</div><div class="page-desc">配置与控制</div></div></div>
-          <div class="row">
-            <label>端口</label>
-            <input id="gwPort" placeholder="18789" />
+          <div class="page-header">
+            <div>
+              <div class="page-title">Gateway</div>
+              <div class="page-desc">连接与认证</div>
+            </div>
           </div>
-          <div class="row">
-            <label>绑定</label>
-            <select id="gwBind"><option value="loopback">仅本机</option><option value="lan">局域网</option></select>
+          <div class="config-section">
+            <div class="config-section-title">基础配置</div>
+            <div class="form-group">
+              <label class="form-label">端口</label>
+              <input class="form-input" id="gwPort" placeholder="18789" />
+            </div>
+            <input id="gwBind" type="hidden" value="loopback" />
+            <div class="gw-option-cards">
+              <div class="gw-option-card selected" data-bind="loopback" onclick="selectGwBind('loopback')">
+                <div class="gw-option-text">
+                  <div class="gw-option-title">仅本机访问</div>
+                  <div class="gw-option-desc">限制为 127.0.0.1</div>
+                </div>
+              </div>
+              <div class="gw-option-card" data-bind="lan" onclick="selectGwBind('lan')">
+                <div class="gw-option-text">
+                  <div class="gw-option-title">局域网访问</div>
+                  <div class="gw-option-desc">允许内网访问</div>
+                </div>
+              </div>
+            </div>
+            <div class="gw-advanced-toggle" onclick="toggleGwAdvanced()">高级设置</div>
+            <div id="gwAdvanced" class="gw-advanced-panel" style="display:none;">
+              <div class="form-group">
+                <label class="form-label">认证模式</label>
+                <select class="form-input" id="gwAuthMode"><option value="token">Token</option><option value="password">Password</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Token/Password</label>
+                <input class="form-input" id="gwAuthValue" placeholder="token 或 password" />
+              </div>
+            </div>
+            <div class="gw-save-bar">
+              <button class="btn btn-primary" onclick="saveGateway()">保存并重启</button>
+              <button class="btn btn-secondary" onclick="loadGateway()">刷新</button>
+              <span class="gw-save-hint">修改后将重启 Gateway</span>
+            </div>
+            <pre id="gwStatus" class="status"></pre>
           </div>
-          <div class="row">
-            <label>认证模式</label>
-            <select id="gwAuthMode"><option value="token">Token</option><option value="password">Password</option></select>
-          </div>
-          <div class="row">
-            <label>Token/Password</label>
-            <input id="gwAuthValue" placeholder="token 或 password" />
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="loadGateway()">加载</button>
-            <button onclick="saveGateway()">保存并重载</button>
-          </div>
-          <pre id="gwStatus" class="status"></pre>
         </section>
 
         <section class="page" data-page="security">
@@ -240,63 +278,46 @@
         </section>
 
         <section class="page" data-page="channels">
-          <div class="page-header"><div><div class="page-title">消息渠道</div><div class="page-desc">引导式配置</div></div></div>
-          <p class="muted">按平台填写凭证，保存后 Gateway 自动生效</p>
-
-          <div class="channel-card">
-            <div class="channel-head">
-              <div>Telegram</div>
-              <button class="secondary" onclick="toggleChannel('tg')">展开/收起</button>
-            </div>
-            <div id="channel-tg" class="channel-body">
-              <p class="muted">在 BotFather 创建 Bot，填入 Token 与允许用户。</p>
-              <div class="row"><label>Bot Token</label><input id="tgToken" placeholder="123:abc" /></div>
-              <div class="row"><label>AllowFrom</label><input id="tgAllow" placeholder="tg:123,tg:456" /></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">消息渠道</div>
+              <div class="page-desc">平台配置与配对</div>
             </div>
           </div>
-
-          <div class="channel-card">
-            <div class="channel-head">
-              <div>QQ 机器人</div>
-              <button class="secondary" onclick="toggleChannel('qq')">展开/收起</button>
+          <div class="config-section">
+            <div class="config-section-title">Telegram</div>
+            <div class="form-group"><label class="form-label">Bot Token</label><input class="form-input" id="tgToken" /></div>
+            <div class="form-group"><label class="form-label">AllowFrom</label><input class="form-input" id="tgAllow" /></div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">QQ</div>
+            <div class="form-group"><label class="form-label">App ID</label><input class="form-input" id="qqAppId" /></div>
+            <div class="form-group"><label class="form-label">App Key</label><input class="form-input" id="qqAppKey" /></div>
+            <div class="form-group"><label class="form-label">Bot Token</label><input class="form-input" id="qqBotToken" /></div>
+            <div class="form-group"><label class="form-label">AllowFrom</label><input class="form-input" id="qqAllow" /></div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">Discord</div>
+            <div class="form-group"><label class="form-label">Bot Token</label><input class="form-input" id="dcToken" /></div>
+            <div class="form-group"><label class="form-label">Guild ID</label><input class="form-input" id="dcGuild" /></div>
+            <div class="form-group"><label class="form-label">User ID</label><input class="form-input" id="dcUser" /></div>
+          </div>
+          <div class="config-actions">
+            <button class="btn btn-secondary" onclick="loadChannels()">刷新</button>
+            <button class="btn btn-primary" onclick="saveChannels()">保存</button>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">配对</div>
+            <div class="form-group"><label class="form-label">频道</label>
+              <select class="form-input" id="pairChannel"><option value="telegram">telegram</option><option value="discord">discord</option><option value="qq">qq</option></select>
             </div>
-            <div id="channel-qq" class="channel-body">
-              <p class="muted">填入 AppID/AppKey/BotToken。</p>
-              <div class="row"><label>QQ App ID</label><input id="qqAppId" /></div>
-              <div class="row"><label>QQ App Key</label><input id="qqAppKey" /></div>
-              <div class="row"><label>QQ Bot Token</label><input id="qqBotToken" /></div>
-              <div class="row"><label>AllowFrom</label><input id="qqAllow" /></div>
+            <div class="form-group"><label class="form-label">配对码</label><input class="form-input" id="pairCode" /></div>
+            <div class="config-actions">
+              <button class="btn btn-secondary" onclick="listPairing()">查看待批准</button>
+              <button class="btn btn-primary" onclick="approvePairing()">批准配对</button>
             </div>
+            <pre id="channelStatus" class="status"></pre>
           </div>
-
-          <div class="channel-card">
-            <div class="channel-head">
-              <div>Discord</div>
-              <button class="secondary" onclick="toggleChannel('dc')">展开/收起</button>
-            </div>
-            <div id="channel-dc" class="channel-body">
-              <p class="muted">在 Discord Developer Portal 创建 Bot。</p>
-              <div class="row"><label>Bot Token</label><input id="dcToken" /></div>
-              <div class="row"><label>Guild ID</label><input id="dcGuild" /></div>
-              <div class="row"><label>User ID</label><input id="dcUser" /></div>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="secondary" onclick="loadChannels()">刷新</button>
-            <button onclick="saveChannels()">保存</button>
-          </div>
-
-          <div class="row">
-            <label>配对频道</label>
-            <select id="pairChannel"><option value="telegram">telegram</option><option value="discord">discord</option><option value="qq">qq</option></select>
-            <input id="pairCode" placeholder="配对码" />
-          </div>
-          <div class="actions">
-            <button class="secondary" onclick="listPairing()">查看待批准</button>
-            <button onclick="approvePairing()">批准配对</button>
-          </div>
-          <pre id="channelStatus" class="status"></pre>
         </section>
 
         <section class="page" data-page="cron">
@@ -434,4 +455,16 @@
     }
 
     bootInit();
+
+    function selectGwBind(bind) {
+      document.getElementById('gwBind').value = bind;
+      document.querySelectorAll('.gw-option-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.bind === bind);
+      });
+    }
+    function toggleGwAdvanced() {
+      const panel = document.getElementById('gwAdvanced');
+      if (!panel) return;
+      panel.style.display = (panel.style.display === 'none') ? 'block' : 'none';
+    }
 
