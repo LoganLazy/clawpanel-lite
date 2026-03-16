@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-<div id="initOverlay" class="init-overlay hidden">
-      <div class="init-card">
+<div id="initOverlay" class="modal-overlay init-overlay hidden">
+      <div class="modal">
         <h2>初始化向导</h2>
         <p class="muted">检测到 OpenClaw 未完成初始化，请按步骤设置。已安装可直接填配置。</p>
         <div class="row">
@@ -423,3 +423,15 @@
 
 </body>
 </html>
+    async function bootInit() {
+      try {
+        const status = await jsonFetch('/api/status');
+        const installed = !(status.openclaw || '').includes('not found');
+        if (!installed) {
+          document.getElementById('initOverlay').classList.remove('hidden');
+        }
+      } catch (e) {}
+    }
+
+    bootInit();
+
