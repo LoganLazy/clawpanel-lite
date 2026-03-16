@@ -7,19 +7,7 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo">🦀</div>
-      <div>
-        <div><strong>ClawPanel Lite</strong> <span class="badge">Lite</span></div>
-        <div class="muted">OpenClaw 轻量控制面板</div>
-      </div>
-    </div>
-    <a href="/logout" class="link-btn">退出</a>
-  </header>
-
-  <div class="container">
-    <div id="initOverlay" class="init-overlay hidden">
+<div id="initOverlay" class="init-overlay hidden">
       <div class="init-card">
         <h2>初始化向导</h2>
         <p class="muted">检测到 OpenClaw 未完成初始化，请按步骤设置。已安装可直接填配置。</p>
@@ -54,26 +42,51 @@
         <pre id="initConfigOutput" class="status"></pre>
       </div>
     </div>
-    <div class="layout">
-      <aside class="sidebar">
-        <div class="sidebar-title">ClawPanel Lite</div>
-        <button class="nav-item active" data-target="dashboard">仪表盘</button>
-        <button class="nav-item" data-target="chat">实时聊天</button>
-        <button class="nav-item" data-target="models">模型配置</button>
-        <button class="nav-item" data-target="gateway">Gateway</button>
-        <button class="nav-item" data-target="security">安全设置</button>
-        <button class="nav-item" data-target="memory">记忆文件</button>
-        <button class="nav-item" data-target="channels">消息渠道</button>
-        <button class="nav-item" data-target="cron">定时任务</button>
-        <button class="nav-item" data-target="skills">技能管理</button>
-        <button class="nav-item" data-target="browser">浏览器</button>
-        <button class="nav-item" data-target="backup">备份恢复</button>
-        <button class="nav-item" data-target="logs">日志</button>
-      </aside>
-
-      <main class="content">
-        <section class="card glow section active" data-section="dashboard">
-          <div class="section-title"><h2>仪表盘</h2><span class="muted">概览</span></div>
+    
+  <div class="layout">
+    <div id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">🦀</div>
+          <div class="sidebar-title">ClawPanel Lite</div>
+          <button class="sidebar-close-btn" onclick="toggleSidebar(false)">×</div>
+        </div>
+        <div class="sidebar-nav">
+<div class="nav-section">
+          <div class="nav-section-title">核心</div>
+          <div class="nav-item active" data-target="dashboard">仪表盘</div>
+          <div class="nav-item" data-target="chat">AI 助手</div>
+          <div class="nav-item" data-target="models">模型配置</div>
+          <div class="nav-item" data-target="channels">消息渠道</div>
+          <div class="nav-item" data-target="gateway">Gateway</div>
+          <div class="nav-item" data-target="cron">定时任务</div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">管理</div>
+          <div class="nav-item" data-target="skills">技能管理</div>
+          <div class="nav-item" data-target="memory">记忆文件</div>
+          <div class="nav-item" data-target="browser">扩展</div>
+          <div class="nav-item" data-target="backup">备份恢复</div>
+          <div class="nav-item" data-target="logs">日志</div>
+          <div class="nav-item" data-target="security">安全设置</div>
+        </div>
+        </div>
+        <div class="sidebar-footer">
+          <div class="sidebar-meta">
+            <span class="sidebar-version">v0.1</span>
+            <a class="sidebar-link" href="/logout">退出</a>
+          </div>
+        </div>
+      </div>
+    <div id="main-col">
+<div class="mobile-topbar">
+        <button class="mobile-hamburger" onclick="toggleSidebar(true)">☰</button>
+        <div class="mobile-topbar-title">ClawPanel Lite</div>
+      </div>
+      <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+        <div id="content">
+          
+        <section class="page active" data-page="dashboard">
+          <div class="page-header"><div><div class="page-title">仪表盘</div><div class="page-desc">概览</div></div></div>
           <div class="kv-grid">
             <div class="kv"><div class="label">OpenClaw</div><div id="dashOpenclaw" class="value">-</div></div>
             <div class="kv"><div class="label">Gateway</div><div id="dashGateway" class="value">-</div></div>
@@ -86,8 +99,8 @@
           <pre id="dashOutput" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="chat">
-          <div class="section-title"><h2>实时聊天</h2><span class="muted">对话</span></div>
+        <section class="page" data-page="chat">
+          <div class="page-header"><div><div class="page-title">实时聊天</div><div class="page-desc">对话</div></div></div>
           <div class="chat-main">
             <div id="chatMessages" class="chat-messages"></div>
             <div class="chat-input">
@@ -100,8 +113,8 @@
           </div>
         </section>
 
-        <section class="card section" data-section="models">
-          <div class="section-title"><h2>模型配置</h2><span class="muted">providers / models</span></div>
+        <section class="page" data-page="models">
+          <div class="page-header"><div><div class="page-title">模型配置</div><div class="page-desc">providers / models</div></div></div>
           <div class="row">
             <label>当前主模型</label>
             <input id="modelPrimary" placeholder="openai/gpt-4o" />
@@ -163,8 +176,8 @@
           </div>
         </section>
 
-        <section class="card section" data-section="gateway">
-          <div class="section-title"><h2>Gateway</h2><span class="muted">配置与控制</span></div>
+        <section class="page" data-page="gateway">
+          <div class="page-header"><div><div class="page-title">Gateway</div><div class="page-desc">配置与控制</div></div></div>
           <div class="row">
             <label>端口</label>
             <input id="gwPort" placeholder="18789" />
@@ -188,8 +201,8 @@
           <pre id="gwStatus" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="security">
-          <div class="section-title"><h2>安全设置</h2><span class="muted">管理员密码</span></div>
+        <section class="page" data-page="security">
+          <div class="page-header"><div><div class="page-title">安全设置</div><div class="page-desc">管理员密码</div></div></div>
           <div class="row"><label>当前密码</label><input id="pwdOld" type="password" /></div>
           <div class="row"><label>新密码</label><input id="pwdNew" type="password" /></div>
           <div class="row"><label>确认新密码</label><input id="pwdNew2" type="password" /></div>
@@ -197,8 +210,8 @@
           <pre id="pwdOutput" class="status"></pre>
         </section>
 
-<section class="card section" data-section="memory">
-          <div class="section-title"><h2>记忆文件</h2><span class="muted">workspace/memory</span></div>
+<section class="page" data-page="memory">
+          <div class="page-header"><div><div class="page-title">记忆文件</div><div class="page-desc">workspace/memory</div></div></div>
           <div class="row">
             <label>分类</label>
             <select id="memCategory">
@@ -226,8 +239,8 @@
           <pre id="memStatus" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="channels">
-          <div class="section-title"><h2>消息渠道</h2><span class="muted">引导式配置</span></div>
+        <section class="page" data-page="channels">
+          <div class="page-header"><div><div class="page-title">消息渠道</div><div class="page-desc">引导式配置</div></div></div>
           <p class="muted">按平台填写凭证，保存后 Gateway 自动生效</p>
 
           <div class="channel-card">
@@ -286,8 +299,8 @@
           <pre id="channelStatus" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="cron">
-          <div class="section-title"><h2>定时任务</h2><span class="muted">卡片视图</span></div>
+        <section class="page" data-page="cron">
+          <div class="page-header"><div><div class="page-title">定时任务</div><div class="page-desc">卡片视图</div></div></div>
           <div class="actions">
             <button onclick="cronStatus()">状态</button>
             <button class="secondary" onclick="listCron()">刷新列表</button>
@@ -313,8 +326,8 @@
           <pre id="cronManage" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="skills">
-          <div class="section-title"><h2>技能管理</h2><span class="muted">Skills</span></div>
+        <section class="page" data-page="skills">
+          <div class="page-header"><div><div class="page-title">技能管理</div><div class="page-desc">Skills</div></div></div>
           <div class="row">
             <label>技能名</label>
             <input id="skillName" placeholder="skill-id" />
@@ -352,8 +365,8 @@
 
         </section>
 
-        <section class="card section" data-section="browser">
-          <div class="section-title"><h2>浏览器扩展</h2><span class="muted">安装 / 截图</span></div>
+        <section class="page" data-page="browser">
+          <div class="page-header"><div><div class="page-title">浏览器扩展</div><div class="page-desc">安装 / 截图</div></div></div>
           <div class="actions">
             <button class="secondary" onclick="browserStatus()">状态</button>
             <button class="secondary" onclick="browserStart()">启动</button>
@@ -371,8 +384,8 @@
           <pre id="browserOutput" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="backup">
-          <div class="section-title"><h2>备份恢复</h2><span class="muted">配置保护</span></div>
+        <section class="page" data-page="backup">
+          <div class="page-header"><div><div class="page-title">备份恢复</div><div class="page-desc">配置保护</div></div></div>
           <div class="row"><label>备份名称</label><input id="backupName" placeholder="auto-20260313" /></div>
           <div class="actions">
             <button onclick="createBackup()">创建</button>
@@ -385,8 +398,8 @@
           <pre id="backupOutput" class="status"></pre>
         </section>
 
-        <section class="card section" data-section="logs">
-          <div class="section-title"><h2>日志</h2><span class="muted">搜索 / 下载</span></div>
+        <section class="page" data-page="logs">
+          <div class="page-header"><div><div class="page-title">日志</div><div class="page-desc">搜索 / 下载</div></div></div>
           <div class="row"><label>关键词</label><input id="logQuery" placeholder="error / warn" /></div>
           <div class="actions">
             <button class="secondary" onclick="loadLogs()">刷新日志</button>
@@ -403,499 +416,10 @@
           </div>
           <pre id="logsOutput" class="status"></pre>
         </section>
-      </main>
-    </div>
+      
+        </div>
+      </div>
   </div>
 
-  <footer class="muted">ClawPanel Lite · Minimal Web UI</footer>
-
-  <script>
-    const state = {
-      models: { config: null, providerKey: null },
-      chatRuns: {},
-    };
-
-    function showSection(id) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.querySelector(`[data-section="${id}"]`).classList.add('active');
-      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-      document.querySelector(`[data-target="${id}"]`).classList.add('active');
-    }
-
-    document.querySelectorAll('.nav-item').forEach(btn => {
-      btn.onclick = () => showSection(btn.dataset.target);
-    });
-
-    async function jsonFetch(url, opts={}) {
-      const res = await fetch(url, opts);
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    }
-
-    async function refreshDashboard() {
-      const data = await jsonFetch('/api/system');
-      document.getElementById('dashMem').textContent = data.memory || '-';
-      document.getElementById('dashDisk').textContent = data.disk || '-';
-      const st = await jsonFetch('/api/status');
-      const firstLine = (val) => (val || '').toString().split("\n")[0] || '-';
-      document.getElementById('dashOpenclaw').textContent = firstLine(st.openclaw);
-      document.getElementById('dashGateway').textContent = firstLine(st.gateway);
-      document.getElementById('dashOutput').textContent = JSON.stringify({system:data, status:st}, null, 2);
-    }
-
-    function appendUser(text) {
-      const box = document.getElementById('chatMessages');
-      const el = document.createElement('div');
-      el.className = 'chat-msg user';
-      el.textContent = text;
-      box.appendChild(el);
-      box.scrollTop = box.scrollHeight;
-    }
-
-    function appendAssistant(text) {
-      const box = document.getElementById('chatMessages');
-      const el = document.createElement('div');
-      el.className = 'chat-msg assistant';
-      el.textContent = text;
-      box.appendChild(el);
-      box.scrollTop = box.scrollHeight;
-    }
-
-    function appendDelta(runId, delta) {
-      let el = document.getElementById('run-' + runId);
-      if (!el) {
-        el = document.createElement('div');
-        el.className = 'chat-msg assistant';
-        el.id = 'run-' + runId;
-        el.textContent = '';
-        document.getElementById('chatMessages').appendChild(el);
-      }
-      el.textContent += delta;
-    }
-
-    async function sendChat() {
-      const text = document.getElementById('chatInput').value.trim();
-      if (!text) return;
-      appendUser(text);
-      document.getElementById('chatInput').value = '';
-      const controller = new AbortController();
-      state.chatRuns.current = controller;
-      const res = await fetch('/api/chat/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
-        signal: controller.signal,
-      });
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let buffer = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop();
-        parts.forEach(chunk => {
-          if (chunk.startsWith('data: ')) {
-            const line = chunk.replace(/^data: /, '').trim();
-            if (line === 'ok') return;
-            appendDelta('stream', line + '\n');
-          }
-        });
-      }
-    }
-
-    function abortChat() {
-      if (state.chatRuns.current) state.chatRuns.current.abort();
-    }
-
-    // ===== Models =====
-    async function loadModels() {
-      const cfg = await jsonFetch('/api/config/raw');
-      state.models.config = cfg;
-      const primary = cfg?.agents?.defaults?.model?.primary || '';
-      document.getElementById('modelPrimary').value = primary;
-      renderProviders();
-    }
-
-    function renderProviders() {
-      const list = document.getElementById('providerList');
-      const providers = (state.models.config?.models?.providers) || {};
-      list.innerHTML = '';
-      Object.keys(providers).forEach(key => {
-        const item = document.createElement('div');
-        item.className = 'file-item';
-        item.textContent = key;
-        item.onclick = () => selectProvider(key);
-        list.appendChild(item);
-      });
-    }
-
-    function selectProvider(key) {
-      state.models.providerKey = key;
-      const p = state.models.config.models.providers[key];
-      document.getElementById('providerKey').value = key;
-      document.getElementById('providerBase').value = p.baseUrl || '';
-      document.getElementById('providerApi').value = p.api || 'openai-completions';
-      document.getElementById('providerKeyValue').value = p.apiKey || '';
-      document.getElementById('modelsStatus').textContent = `已选服务商: ${key} (模型数: ${(p.models||[]).length})`;
-    }
-
-    function addProvider() {
-      document.getElementById('providerKey').value = '';
-      document.getElementById('providerBase').value = '';
-      document.getElementById('providerKeyValue').value = '';
-      document.getElementById('providerApi').value = 'openai-completions';
-      document.getElementById('modelsStatus').textContent = '填写后保存服务商';
-    }
-
-    async function saveProvider() {
-      const cfg = state.models.config || await jsonFetch('/api/config/raw');
-      if (!cfg.models) cfg.models = { providers: {} };
-      if (!cfg.models.providers) cfg.models.providers = {};
-      const key = document.getElementById('providerKey').value.trim();
-      if (!key) return;
-      cfg.models.providers[key] = {
-        baseUrl: document.getElementById('providerBase').value.trim(),
-        apiKey: document.getElementById('providerKeyValue').value.trim(),
-        api: document.getElementById('providerApi').value,
-        models: cfg.models.providers[key]?.models || [],
-      };
-      state.models.config = cfg;
-      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
-      document.getElementById('modelsStatus').textContent = '服务商已保存';
-      renderProviders();
-      state.models.providerKey = key;
-    }
-
-    async function addModel() {
-      const key = document.getElementById('providerKey').value.trim();
-      if (!key) return;
-      const cfg = state.models.config || await jsonFetch('/api/config/raw');
-      const p = cfg.models?.providers?.[key];
-      if (!p) return;
-      const id = document.getElementById('modelId').value.trim();
-      if (!id) return;
-      const name = document.getElementById('modelName').value.trim() || id;
-      const ctx = parseInt(document.getElementById('modelContext').value || '0') || 0;
-      const reasoning = document.getElementById('modelReasoning').value === 'true';
-      if (!Array.isArray(p.models)) p.models = [];
-      p.models.push({ id, name, contextWindow: ctx || undefined, reasoning });
-      state.models.config = cfg;
-      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
-      document.getElementById('modelsStatus').textContent = `模型 ${id} 已添加`;
-      loadModels();
-    }
-
-    async function deleteProvider() {
-      const key = document.getElementById('providerKey').value.trim();
-      if (!key) return;
-      const cfg = state.models.config || await jsonFetch('/api/config/raw');
-      if (cfg.models?.providers?.[key]) delete cfg.models.providers[key];
-      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
-      document.getElementById('modelsStatus').textContent = `已删除 ${key}`;
-      loadModels();
-    }
-
-    async function setPrimaryModel() {
-      const primary = document.getElementById('modelPrimary').value.trim();
-      if (!primary) return;
-      const cfg = state.models.config || await jsonFetch('/api/config/raw');
-      if (!cfg.agents) cfg.agents = {};
-      if (!cfg.agents.defaults) cfg.agents.defaults = {};
-      if (!cfg.agents.defaults.model) cfg.agents.defaults.model = {};
-      cfg.agents.defaults.model.primary = primary;
-      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
-      document.getElementById('modelsStatus').textContent = '主模型已更新';
-    }
-
-    // ===== Gateway =====
-    async function loadGateway() {
-      const data = await jsonFetch('/api/config/raw');
-      const gw = data.gateway || {};
-      document.getElementById('gwPort').value = gw.port || 18789;
-      document.getElementById('gwBind').value = gw.bind || 'loopback';
-      document.getElementById('gwAuthMode').value = gw.auth?.mode || 'token';
-      document.getElementById('gwAuthValue').value = gw.auth?.token || gw.auth?.password || '';
-    }
-    async function saveGateway() {
-      const data = await jsonFetch('/api/config/raw');
-      data.gateway = data.gateway || {};
-      data.gateway.port = parseInt(document.getElementById('gwPort').value) || 18789;
-      data.gateway.bind = document.getElementById('gwBind').value;
-      const mode = document.getElementById('gwAuthMode').value;
-      const val = document.getElementById('gwAuthValue').value || '';
-      data.gateway.auth = mode === 'password' ? {mode:'password', password: val} : (val ? {mode:'token', token: val} : {});
-      await jsonFetch('/api/config/raw', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
-      await jsonFetch('/api/gateway/restart', {method:'POST'});
-      document.getElementById('gwStatus').textContent = '已保存并重启';
-    }
-
-    function toggleChannel(id) {
-      const el = document.getElementById('channel-' + id);
-      if (!el) return;
-      el.style.display = (el.style.display === 'none') ? 'block' : 'none';
-    }
-
-    async function changePassword() {
-      const oldPass = document.getElementById('pwdOld').value;
-      const newPass = document.getElementById('pwdNew').value;
-      const newPass2 = document.getElementById('pwdNew2').value;
-      if (!newPass || newPass !== newPass2) {
-        document.getElementById('pwdOutput').textContent = '新密码不一致';
-        return;
-      }
-      const res = await jsonFetch('/api/account/password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({oldPass, newPass})});
-      document.getElementById('pwdOutput').textContent = res.status || 'ok';
-    }
-
-    // ===== Memory =====
-    async function listMemory() {
-      const cat = document.getElementById('memCategory').value;
-      const data = await jsonFetch(`/api/memory/list?category=${encodeURIComponent(cat)}`);
-      const list = document.getElementById('memoryList');
-      list.innerHTML = '';
-      data.forEach(p => {
-        const item = document.createElement('div');
-        item.className = 'file-item';
-        item.textContent = p;
-        item.onclick = () => { document.getElementById('memPath').value = p; readMemory(); };
-        list.appendChild(item);
-      });
-    }
-    async function readMemory() {
-      const path = document.getElementById('memPath').value;
-      const data = await jsonFetch(`/api/memory/read?path=${encodeURIComponent(path)}`);
-      document.getElementById('memContent').value = data.content || '';
-    }
-    async function writeMemory() {
-      const path = document.getElementById('memPath').value;
-      const content = document.getElementById('memContent').value;
-      await jsonFetch('/api/memory/write', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path, content})});
-      document.getElementById('memStatus').textContent = '已保存';
-      listMemory();
-    }
-    async function deleteMemory() {
-      const path = document.getElementById('memPath').value;
-      await jsonFetch('/api/memory/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path})});
-      document.getElementById('memStatus').textContent = '已删除';
-      listMemory();
-    }
-
-    // ===== Channels =====
-    async function loadChannels() {
-      const data = await jsonFetch('/api/channels/get');
-      document.getElementById('tgToken').value = data.telegramToken || '';
-      document.getElementById('tgAllow').value = data.telegramAllow || '';
-      document.getElementById('qqAppId').value = data.qqAppId || '';
-      document.getElementById('qqAppKey').value = data.qqAppKey || '';
-      document.getElementById('qqBotToken').value = data.qqBotToken || '';
-      document.getElementById('qqAllow').value = data.qqAllow || '';
-      document.getElementById('dcToken').value = data.discordToken || '';
-      document.getElementById('dcGuild').value = data.discordGuild || '';
-      document.getElementById('dcUser').value = data.discordUser || '';
-    }
-    async function saveChannels() {
-      const payload = {
-        telegramToken: document.getElementById('tgToken').value,
-        telegramAllow: document.getElementById('tgAllow').value,
-        qqAppId: document.getElementById('qqAppId').value,
-        qqAppKey: document.getElementById('qqAppKey').value,
-        qqBotToken: document.getElementById('qqBotToken').value,
-        qqAllow: document.getElementById('qqAllow').value,
-        discordToken: document.getElementById('dcToken').value,
-        discordGuild: document.getElementById('dcGuild').value,
-        discordUser: document.getElementById('dcUser').value,
-      };
-      const res = await jsonFetch('/api/channels/set', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-      document.getElementById('channelStatus').textContent = res.status || 'ok';
-    }
-
-    async function listPairing() {
-      const channel = document.getElementById('pairChannel').value;
-      const data = await jsonFetch(`/api/pairing/list?channel=${encodeURIComponent(channel)}`);
-      document.getElementById('channelStatus').textContent = JSON.stringify(data, null, 2);
-    }
-    async function approvePairing() {
-      const channel = document.getElementById('pairChannel').value;
-      const code = document.getElementById('pairCode').value;
-      const res = await jsonFetch('/api/pairing/approve', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({channel, code})});
-      document.getElementById('channelStatus').textContent = res.output || 'ok';
-    }
-
-    // ===== Cron =====
-    async function cronAdd() {
-      const payload = {
-        jobName: document.getElementById('cronName').value,
-        text: document.getElementById('cronText').value,
-        minutes: parseInt(document.getElementById('cronMinutes').value || '30'),
-        mode: document.getElementById('cronMode').value,
-      };
-      const res = await jsonFetch('/api/cron/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-    async function listCron() {
-      const res = await jsonFetch('/api/cron/list');
-      const out = res.output || '';
-      document.getElementById('cronManage').textContent = out;
-      const cards = document.getElementById('cronCards');
-      cards.innerHTML = '';
-      try {
-        const parsed = JSON.parse(out);
-        const jobs = parsed.jobs || parsed || [];
-        if (Array.isArray(jobs)) {
-          jobs.forEach(j => {
-            const el = document.createElement('div');
-            el.className = 'cron-card';
-            el.innerHTML = `<div class="cron-title">${j.name || '未命名'}</div>
-              <div class="muted">${j.id || ''}</div>
-              <div class="muted">${JSON.stringify(j.schedule || {})}</div>
-              <div class="muted">${(j.payload && (j.payload.message || j.payload.text)) || ''}</div>`;
-            cards.appendChild(el);
-          });
-        }
-      } catch (e) {}
-    }
-    async function cronStatus() {
-      const res = await jsonFetch('/api/cron/status');
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-    async function cronRuns() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch(`/api/cron/runs?id=${encodeURIComponent(id)}`);
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-    async function cronRunNow() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch('/api/cron/run', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-    async function cronEnable() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch('/api/cron/enable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-    async function cronDisable() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch('/api/cron/disable', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-    async function cronRemove() {
-      const id = document.getElementById('cronId').value;
-      const res = await jsonFetch('/api/cron/rm', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-      document.getElementById('cronManage').textContent = res.output || '';
-    }
-
-    // ===== Skills =====
-    async function listSkills() {
-      const res = await jsonFetch('/api/skills', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'list'})});
-      document.getElementById('skillsOutput').textContent = res.output || '';
-    }
-    async function checkSkills() {
-      const res = await jsonFetch('/api/skills', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'check'})});
-      document.getElementById('skillsOutput').textContent = res.output || '';
-    }
-    async function infoSkill() {
-      const res = await jsonFetch('/api/skills', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'info', skill: document.getElementById('skillName').value})});
-      document.getElementById('skillsOutput').textContent = res.output || '';
-    }
-    async function listLocalSkills() {
-      const data = await jsonFetch('/api/skills/local/list');
-      document.getElementById('skillsLocal').textContent = JSON.stringify(data, null, 2);
-    }
-    async function installSkillLocal() {
-      const payload = {git: document.getElementById('skillGit').value, name: document.getElementById('skillInstallName').value, target: document.getElementById('skillTarget').value};
-      await jsonFetch('/api/skills/local/install', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-      document.getElementById('skillsOutput').textContent = '已安装';
-      listLocalSkills();
-    }
-    async function updateSkillLocal() {
-      const payload = {name: document.getElementById('skillInstallName').value, target: document.getElementById('skillTarget').value};
-      await jsonFetch('/api/skills/local/update', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-      document.getElementById('skillsOutput').textContent = '已更新';
-      listLocalSkills();
-    }
-    async function removeSkillLocal() {
-      const payload = {name: document.getElementById('skillInstallName').value, target: document.getElementById('skillTarget').value};
-      await jsonFetch('/api/skills/local/remove', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-      document.getElementById('skillsOutput').textContent = '已移除';
-      listLocalSkills();
-    }
-
-    // ===== Browser =====
-    async function browserStatus() {
-      const data = await jsonFetch('/api/browser/status');
-      document.getElementById('browserOutput').textContent = JSON.stringify(data, null, 2);
-    }
-    async function browserStart() {
-      const data = await jsonFetch('/api/browser/start', {method:'POST'});
-      document.getElementById('browserOutput').textContent = JSON.stringify(data, null, 2);
-    }
-    async function browserStop() {
-      const data = await jsonFetch('/api/browser/stop', {method:'POST'});
-      document.getElementById('browserOutput').textContent = JSON.stringify(data, null, 2);
-    }
-
-    // ===== Backups =====
-    async function createBackup() {
-      const res = await jsonFetch('/api/backups/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: document.getElementById('backupName').value})});
-      document.getElementById('backupOutput').textContent = res.output || 'ok';
-    }
-    async function listBackups() {
-      const data = await jsonFetch('/api/backups/list');
-      document.getElementById('backupOutput').textContent = data.join("\n");
-    }
-
-async function downloadBackup() {
-      const name = document.getElementById('downloadName').value;
-      window.open(`/api/backups/download?name=${encodeURIComponent(name)}`, '_blank');
-    }
-    async function restoreBackup() {
-      const name = document.getElementById('restoreName').value;
-      const res = await jsonFetch('/api/backups/restore', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name})});
-      document.getElementById('backupOutput').textContent = res.output || 'ok';
-    }
-
-    // ===== Logs =====
-    async function loadLogs() {
-      const data = await jsonFetch('/api/logs');
-      document.getElementById('logsOutput').textContent = data.output || '';
-    }
-    async function searchLogs() {
-      const q = document.getElementById('logQuery').value;
-      const data = await jsonFetch('/api/logs/search', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query: q})});
-      document.getElementById('logsOutput').textContent = data.output || '';
-    }
-    let logTimer = null;
-    function setLogAuto() {
-      const v = parseInt(document.getElementById('logAutoInterval').value || '0');
-      if (logTimer) { clearInterval(logTimer); logTimer = null; }
-      if (v > 0) logTimer = setInterval(loadLogs, v);
-    }
-
-    refreshDashboard();
-
-    async function browserInstall() {
-      const data = await jsonFetch('/api/browser/extension');
-      document.getElementById('browserOutput').textContent = data.output || JSON.stringify(data, null, 2);
-    }
-
-    async function browserScreenshot() {
-      const url = document.getElementById('browserShotUrl').value;
-      const res = await jsonFetch('/api/browser/screenshot', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url})});
-      if (res.image) {
-        document.getElementById('browserShot').src = 'data:image/png;base64,' + res.image;
-      }
-      document.getElementById('browserOutput').textContent = res.output || '截图完成';
-    }
-
-    async function createCustomSkill() {
-      const name = document.getElementById('customSkillName').value;
-      const description = document.getElementById('customSkillDesc').value;
-      const res = await jsonFetch('/api/skills/custom/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, description})});
-      document.getElementById('skillsOutput').textContent = res.path || '已创建';
-      listLocalSkills();
-    }
-</script>
 </body>
 </html>
