@@ -100,17 +100,25 @@
         </section>
 
         <section class="page" data-page="chat">
-          <div class="page-header"><div><div class="page-title">实时聊天</div><div class="page-desc">对话</div></div></div>
-          <div class="chat-main">
-            <div id="chatMessages" class="chat-messages"></div>
-            <div class="chat-input">
-              <textarea id="chatInput" rows="3" placeholder="输入消息..."></textarea>
-              <div class="actions">
-                <button class="secondary" onclick="abortChat()">停止生成</button>
-                <button onclick="sendChat()">发送</button>
-              </div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">AI 助手</div>
+              <div class="page-desc">对话与任务</div>
             </div>
           </div>
+          <div class="task-hub">
+            <div class="task-hub-bar">
+              <div class="task-mode">
+                <button class="task-mode-btn active">对话</button>
+                <button class="task-mode-btn">任务</button>
+              </div>
+            </div>
+            <div class="task-input-row">
+              <textarea class="task-input" id="chatInput" placeholder="输入消息..."></textarea>
+              <button class="task-send-btn" onclick="sendChat()">➤</button>
+            </div>
+          </div>
+          <div id="chatMessages" class="log-viewer"></div>
         </section>
 
         <section class="page" data-page="models">
@@ -240,12 +248,20 @@
         </section>
 
         <section class="page" data-page="security">
-          <div class="page-header"><div><div class="page-title">安全设置</div><div class="page-desc">管理员密码</div></div></div>
-          <div class="row"><label>当前密码</label><input id="pwdOld" type="password" /></div>
-          <div class="row"><label>新密码</label><input id="pwdNew" type="password" /></div>
-          <div class="row"><label>确认新密码</label><input id="pwdNew2" type="password" /></div>
-          <div class="actions"><button class="secondary" onclick="changePassword()">修改密码</button></div>
-          <pre id="pwdOutput" class="status"></pre>
+          <div class="page-header">
+            <div>
+              <div class="page-title">安全设置</div>
+              <div class="page-desc">管理员账户</div>
+            </div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">修改密码</div>
+            <div class="form-group"><label class="form-label">当前密码</label><input class="form-input" id="pwdOld" type="password" /></div>
+            <div class="form-group"><label class="form-label">新密码</label><input class="form-input" id="pwdNew" type="password" /></div>
+            <div class="form-group"><label class="form-label">确认新密码</label><input class="form-input" id="pwdNew2" type="password" /></div>
+            <div class="config-actions"><button class="btn btn-primary" onclick="changePassword()">修改密码</button></div>
+            <pre id="pwdOutput" class="status"></pre>
+          </div>
         </section>
 
 <section class="page" data-page="memory">
