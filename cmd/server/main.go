@@ -1015,12 +1015,12 @@ mux.HandleFunc("/api/cron/list", withAuth(sc, func(w http.ResponseWriter, r *htt
 			http.Error(w, "failed to create skill", http.StatusInternalServerError)
 			return
 		}
-		md := "# " + name + "
+		md := `# ` + name + `
 
-" + strings.TrimSpace(payload.Description) + "
+` + strings.TrimSpace(payload.Description) + `
 
-" +
-			"## Usage
+` +
+			`## Usage
 
 Describe usage here.
 
@@ -1031,7 +1031,7 @@ Describe usage here.
 ## Outputs
 
 - output: string
-"
+`
 		if err := os.WriteFile(filepath.Join(path, "SKILL.md"), []byte(md), 0644); err != nil {
 			http.Error(w, "failed to write skill", http.StatusInternalServerError)
 			return
