@@ -3867,3 +3867,10 @@ body::before { content:""; position:fixed; inset:0; background-image: linear-gra
 @media (max-width: 768px) {
   .page { padding: var(--space-lg); }
 }
+
+.stats-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: var(--space-lg); margin: var(--space-lg) 0; }
+.stat-card { background: var(--bg-secondary); border:1px solid var(--border-primary); border-radius: var(--radius-lg); padding: var(--space-lg); box-shadow: var(--shadow-sm); }
+.stat-label { color: var(--text-secondary); font-size: 12px; }
+.stat-value { font-size: 22px; font-weight: 700; margin-top: 6px; }
+.log-panel { background: var(--bg-secondary); border:1px solid var(--border-primary); border-radius: var(--radius-lg); padding: var(--space-lg); }
+.log-panel-title { font-weight: 600; margin-bottom: var(--space-sm); }

@@ -86,17 +86,25 @@
         <div id="content">
           
         <section class="page active" data-page="dashboard">
-          <div class="page-header"><div><div class="page-title">仪表盘</div><div class="page-desc">概览</div></div></div>
-          <div class="kv-grid">
-            <div class="kv"><div class="label">OpenClaw</div><div id="dashOpenclaw" class="value">-</div></div>
-            <div class="kv"><div class="label">Gateway</div><div id="dashGateway" class="value">-</div></div>
-            <div class="kv"><div class="label">CPU/内存</div><div id="dashMem" class="value">-</div></div>
-            <div class="kv"><div class="label">磁盘</div><div id="dashDisk" class="value">-</div></div>
+          <div class="page-header">
+            <div>
+              <div class="page-title">仪表盘</div>
+              <div class="page-desc">系统状态概览</div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-secondary" onclick="refreshDashboard()">刷新</button>
+            </div>
           </div>
-          <div class="actions">
-            <button class="secondary" onclick="refreshDashboard()">刷新</button>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">OpenClaw</div><div id="dashOpenclaw" class="stat-value">-</div></div>
+            <div class="stat-card"><div class="stat-label">Gateway</div><div id="dashGateway" class="stat-value">-</div></div>
+            <div class="stat-card"><div class="stat-label">内存</div><div id="dashMem" class="stat-value">-</div></div>
+            <div class="stat-card"><div class="stat-label">磁盘</div><div id="dashDisk" class="stat-value">-</div></div>
           </div>
-          <pre id="dashOutput" class="status"></pre>
+          <div class="log-panel">
+            <div class="log-panel-title">状态详情</div>
+            <pre id="dashOutput" class="log-viewer"></pre>
+          </div>
         </section>
 
         <section class="page" data-page="chat">
@@ -422,36 +430,56 @@
         </section>
 
         <section class="page" data-page="backup">
-          <div class="page-header"><div><div class="page-title">备份恢复</div><div class="page-desc">配置保护</div></div></div>
-          <div class="row"><label>备份名称</label><input id="backupName" placeholder="auto-20260313" /></div>
-          <div class="actions">
-            <button onclick="createBackup()">创建</button>
-            <button class="secondary" onclick="listBackups()">查看</button>
+          <div class="page-header">
+            <div>
+              <div class="page-title">备份恢复</div>
+              <div class="page-desc">配置保护</div>
+            </div>
           </div>
-          <div class="row"><label>下载备份</label><input id="downloadName" placeholder="20260313-123000.json" /></div>
-          <div class="actions"><a id="backupDownloadLink" class="link-btn" href="#" onclick="downloadBackup(); return false;">下载备份</a></div>
-          <div class="row"><label>恢复备份</label><input id="restoreName" placeholder="20260313-123000.json" /></div>
-          <div class="actions"><button class="danger" onclick="restoreBackup()">恢复</button></div>
-          <pre id="backupOutput" class="status"></pre>
+          <div class="config-section">
+            <div class="config-section-title">创建备份</div>
+            <div class="form-group"><label class="form-label">备份名称</label><input class="form-input" id="backupName" placeholder="auto-20260313" /></div>
+            <div class="config-actions">
+              <button class="btn btn-primary" onclick="createBackup()">创建</button>
+              <button class="btn btn-secondary" onclick="listBackups()">查看</button>
+            </div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">下载备份</div>
+            <div class="form-group"><label class="form-label">文件名</label><input class="form-input" id="downloadName" placeholder="20260313-123000.json" /></div>
+            <div class="config-actions"><button class="btn btn-secondary" onclick="downloadBackup()">下载</button></div>
+          </div>
+          <div class="config-section">
+            <div class="config-section-title">恢复备份</div>
+            <div class="form-group"><label class="form-label">文件名</label><input class="form-input" id="restoreName" placeholder="20260313-123000.json" /></div>
+            <div class="config-actions"><button class="btn btn-danger" onclick="restoreBackup()">恢复</button></div>
+          </div>
+          <pre id="backupOutput" class="log-viewer"></pre>
         </section>
 
         <section class="page" data-page="logs">
-          <div class="page-header"><div><div class="page-title">日志</div><div class="page-desc">搜索 / 下载</div></div></div>
-          <div class="row"><label>关键词</label><input id="logQuery" placeholder="error / warn" /></div>
-          <div class="actions">
-            <button class="secondary" onclick="loadLogs()">刷新日志</button>
-            <button onclick="searchLogs()">搜索</button>
-            <a class="link-btn" href="/api/logs/download" target="_blank">下载日志</a>
+          <div class="page-header">
+            <div>
+              <div class="page-title">日志</div>
+              <div class="page-desc">搜索 / 下载</div>
+            </div>
+            <div class="header-actions">
+              <a class="btn btn-secondary" href="/api/logs/download" target="_blank">下载日志</a>
+            </div>
           </div>
-          <div class="row">
-            <label>自动刷新</label>
-            <select id="logAutoInterval" onchange="setLogAuto()">
-              <option value="0">关闭</option>
-              <option value="5000">5 秒</option>
-              <option value="10000">10 秒</option>
-            </select>
+          <div class="config-section">
+            <div class="form-group"><label class="form-label">关键词</label><input class="form-input" id="logQuery" placeholder="error / warn" /></div>
+            <div class="config-actions">
+              <button class="btn btn-secondary" onclick="loadLogs()">刷新日志</button>
+              <button class="btn btn-primary" onclick="searchLogs()">搜索</button>
+              <select class="form-input" id="logAutoInterval" onchange="setLogAuto()">
+                <option value="0">关闭自动刷新</option>
+                <option value="5000">5 秒</option>
+                <option value="10000">10 秒</option>
+              </select>
+            </div>
           </div>
-          <pre id="logsOutput" class="status"></pre>
+          <pre id="logsOutput" class="log-viewer"></pre>
         </section>
       
         </div>
